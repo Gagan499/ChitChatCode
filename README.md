@@ -149,7 +149,14 @@ The application follows a **full-stack client-server architecture**:
 
 ---
 
-![alt text](image.png)
+# frontend arch
+![alt text](image-1.png)
+
+# backend arch
+![alt text](image-2.png)
+
+# full system
+![alt text](image-3.png)
 
 ## 🏁 Conclusion
 
