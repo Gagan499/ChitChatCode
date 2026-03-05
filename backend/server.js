@@ -1,9 +1,15 @@
 const express = require("express");
+const cors = require("cors");
 const sequelize = require("./config/database");
 require("./models"); // load associations
 
 const app = express();
+app.use(cors());
 app.use(express.json());
+
+// Routes
+app.use("/api/auth", require("./routes/authRoutes"));
+
 
 const PORT = 5000;
 
