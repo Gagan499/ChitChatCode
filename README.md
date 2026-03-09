@@ -149,6 +149,15 @@ The application follows a **full-stack client-server architecture**:
 
 ---
 
+# frontend arch
+![alt text](image-1.png)
+
+# backend arch
+![alt text](image-2.png)
+
+# full system
+![alt text](image-3.png)
+
 ## 🏁 Conclusion
 
 This project delivers a **secure, scalable, and developer-focused platform** that combines communication and code execution into a single collaborative environment. It is ideal for educational platforms, interview systems, and competitive programming applications.
