@@ -8,7 +8,6 @@ import SettingsPage from "./SettingsPage";
 import LocalPhoneOutlinedIcon from "@mui/icons-material/LocalPhoneOutlined";
 import { useChat } from "../hooks/useChat";
 import { AuthContext } from "../context/AuthContext";
-
 // ─── Placeholder panel ────────────────────────────────────────────────────────
 const PlaceholderPanel = ({ icon, label }) => (
   <Stack

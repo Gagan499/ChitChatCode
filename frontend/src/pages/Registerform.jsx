@@ -1,6 +1,7 @@
 import { useState, useContext, useEffect, useRef } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import { io } from 'socket.io-client';
+import { registerUser } from "../services/api";
+// import { io } from 'socket.io-client';
 
 const SOCKET_URL = `http://${import.meta.env.VITE_BACKEND_HOST || 'localhost'}:${import.meta.env.VITE_BACKEND_PORT || 5000}`;
 
@@ -9,19 +10,19 @@ function Registerform({ prefillEmail = '', onBack }) {
   const [form, setForm] = useState({ username: '', email: prefillEmail, password: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const socketRef = useRef(null);
+  // const socketRef = useRef(null);
 
-  useEffect(() => {
-    socketRef.current = io(SOCKET_URL, { transports: ['websocket'] });
-    return () => socketRef.current?.disconnect();
-  }, []);
+  // useEffect(() => {
+  //   socketRef.current = io(SOCKET_URL, { transports: ['websocket'] });
+  //   return () => socketRef.current?.disconnect();
+  // }, []);
 
   const handleChange = (e) => {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
     setError('');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.username || !form.email || !form.password) {
       setError('Please fill in all fields.');
@@ -31,27 +32,45 @@ function Registerform({ prefillEmail = '', onBack }) {
       setError('Password must be at least 6 characters.');
       return;
     }
-    setLoading(true);
-    setError('');
+    try {
+      setLoading(true);
+      setError("");
+      const res = await registerUser({
+        username: form.username,
+        email: form.email,
+        password: form.password
+      });
 
-    const socket = socketRef.current;
+      const { token, user } = res.data;
 
-    socket.emit('auth:register', {
-      username: form.username,
-      email: form.email,
-      password: form.password,
-    });
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
 
-    socket.once('auth:register:result', async (result) => {
-      setLoading(false);
-      if (result.success) {
-        localStorage.setItem('token', result.token);
-        localStorage.setItem('user', JSON.stringify(result.user));
-        await login({ email: form.email, password: form.password });
-      } else {
-        setError(result.message || 'Registration failed.');
-      }
-    });
+      await login({ email: form.email, password: form.password });
+
+    } catch (err) {
+      setError(err.response?.data?.message || "Registration failed.");
+    }
+
+    setLoading(false);
+    // const socket = socketRef.current;
+
+    // socket.emit('auth:register', {
+    //   username: form.username,
+    //   email: form.email,
+    //   password: form.password,
+    // });
+
+    // socket.once('auth:register:result', async (result) => {
+    //   setLoading(false);
+    //   if (result.success) {
+    //     localStorage.setItem('token', result.token);
+    //     localStorage.setItem('user', JSON.stringify(result.user));
+    //     await login({ email: form.email, password: form.password });
+    //   } else {
+    //     setError(result.message || 'Registration failed.');
+    //   }
+    // });
   };
 
   return (

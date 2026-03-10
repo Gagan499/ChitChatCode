@@ -1,7 +1,8 @@
 import { useState, useContext, useEffect, useRef } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import Registerform from './Registerform';
-import { io } from 'socket.io-client';
+import { loginUser } from "../services/api";
+// import { io } from 'socket.io-client';
 
 const SOCKET_URL = `http://${import.meta.env.VITE_BACKEND_HOST || 'localhost'}:${import.meta.env.VITE_BACKEND_PORT || 5000}`;
 
@@ -12,46 +13,73 @@ function Loginform() {
   const [error, setError] = useState('');
   const [showRegister, setShowRegister] = useState(false);
   const [prefillEmail, setPrefillEmail] = useState('');
-  const socketRef = useRef(null);
+  // const socketRef = useRef(null);
 
-  useEffect(() => {
-    socketRef.current = io(SOCKET_URL, { transports: ['websocket'] });
-    return () => socketRef.current?.disconnect();
-  }, []);
+  // useEffect(() => {
+  //   socketRef.current = io(SOCKET_URL, { transports: ['websocket'] });
+  //   return () => socketRef.current?.disconnect();
+  // }, []);
 
   const handleChange = (e) => {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
     setError('');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.email || !form.password) {
       setError('Please fill in all fields.');
       return;
     }
-    setLoading(true);
-    setError('');
 
-    const socket = socketRef.current;
+    try {
+      setLoading(true);
+      setError('');
 
-    socket.emit('auth:login', { email: form.email, password: form.password });
+      const res = await loginUser({
+        email: form.email,
+        password: form.password
+      });
 
-    socket.once('auth:login:result', async (result) => {
-      setLoading(false);
-      if (result.success) {
-        // Persist token + user via AuthContext
-        localStorage.setItem('token', result.token);
-        localStorage.setItem('user', JSON.stringify(result.user));
-        await login({ email: form.email, password: form.password });
-      } else if (result.notFound) {
-        // Not in DB → go to register with pre-filled email
+      const { token, user } = res.data;
+
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
+
+      await login(user);
+    } catch (err) {
+      if (err.response?.status === 401) {
+        setError("Invalid email or password.");
+      } else if (err.response?.status === 404) {
+        // user not found → show register page
         setPrefillEmail(form.email);
         setShowRegister(true);
       } else {
-        setError(result.message || 'Login failed.');
+        setError(err.response?.data?.message || "Login failed.");
       }
-    });
+    }
+
+    setLoading(false);
+
+    // const socket = socketRef.current;
+
+    // socket.emit('auth:login', { email: form.email, password: form.password });
+
+    // socket.once('auth:login:result', async (result) => {
+    //   setLoading(false);
+    //   if (result.success) {
+    //     // Persist token + user via AuthContext
+    //     localStorage.setItem('token', result.token);
+    //     localStorage.setItem('user', JSON.stringify(result.user));
+    //     await login({ email: form.email, password: form.password });
+    //   } else if (result.notFound) {
+    //     // Not in DB → go to register with pre-filled email
+    //     setPrefillEmail(form.email);
+    //     setShowRegister(true);
+    //   } else {
+    //     setError(result.message || 'Login failed.');
+    //   }
+    // });
   };
 
   if (showRegister) {
