@@ -6,6 +6,6 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   plugins: [react(),tailwindcss()],
   server: {
-    port: parseInt(loadEnv('', path.resolve(__dirname, '..'), '').VITE_FRONTEND_PORT || '5173'),
+    port: parseInt(loadEnv('', process.cwd()).VITE_FRONTEND_PORT) || 5174,
   },
 })
