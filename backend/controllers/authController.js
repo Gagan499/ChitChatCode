@@ -1,13 +1,6 @@
 const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
 const User = require("../models/User");
-
-// Generate JWT Token
-const generateToken = (id) => {
-    return jwt.sign({ id }, process.env.JWT_SECRET || "default_secret_key", {
-        expiresIn: "30d",
-    });
-};
+const {generateToken} = require("../services/autheService")
 
 // @desc    Register a new user
 // @route   POST /api/auth/register
@@ -110,7 +103,7 @@ const getMe = async (req, res) => {
             return res.status(404).json({ message: "User not found" });
         }
 
-        res.json(user);
+        return res.json(user);
     } catch (error) {
         console.error("Error in getMe:", error);
         res.status(500).json({ message: "Server error", error: error.message });

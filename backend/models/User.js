@@ -20,7 +20,7 @@ const User = sequelize.define("User", {
   password_hash: {
     type: DataTypes.TEXT,
     allowNull: false,
-  },
+  }
 }, {
   tableName: "users",
   timestamps: true,
