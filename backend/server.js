@@ -1,11 +1,17 @@
 require("dotenv").config();
 const express = require("express");
+const http = require("http");
 const cors = require("cors");
 const sequelize = require("./config/database");
 require("./models"); // load associations
 const authRoutes  = require("./routes/authRoutes");
+const setupSockets = require("./sockets/socketHandler");
 
 const app = express();
+const server = http.createServer(app);
+
+// 🔹 Setup WebSockets
+setupSockets(server);
 app.use(cors());
 app.use(express.json());
 
@@ -24,7 +30,7 @@ sequelize.authenticate()
         console.log("✅ Database synced successfully");
 
         // 🔹 Start Server ONLY after DB is ready
-        app.listen(process.env.PORT, () => {
+        server.listen(process.env.PORT, () => {
             console.log(`🚀 Server running on port ${process.env.PORT}`);
         });
     })
