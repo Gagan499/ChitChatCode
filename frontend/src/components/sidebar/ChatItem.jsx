@@ -11,22 +11,20 @@ import {
   ListItemIcon,
   ListItemText,
 } from "@mui/material";
-import { styled } from "@mui/material/styles";
 import { PushPin, Archive, ArrowCounterClockwise } from "@phosphor-icons/react";
 
-const StyledBadge = styled(Badge)(({ theme }) => ({
-  "& .MuiBadge-badge": {
-    backgroundColor: "#44b700",
-    color: "#44b700",
-    boxShadow: `0 0 0 2px ${theme.palette.background.paper}`,
-  },
-}));
+const STATUS_COLORS = {
+  online: "#44b700",
+  away: "#f59e0b",
+  busy: "#ef4444",
+};
 
 const ChatItem = ({
   name,
   message,
   time,
-  online,
+  status = "offline",
+  online, // kept for backwards compatibility
   selected,
   pinned,
   archived,
@@ -34,6 +32,8 @@ const ChatItem = ({
   onPinToggle,
   onArchiveToggle,
 }) => {
+  const effectiveStatus = status || (online ? "online" : "offline");
+  const dotColor = STATUS_COLORS[effectiveStatus] || null;
   const [contextMenu, setContextMenu] = useState(null);
 
   const handleContextMenu = (e) => {
@@ -77,16 +77,29 @@ const ChatItem = ({
       >
         <Stack direction="row" alignItems="center" justifyContent="space-between">
           <Stack direction="row" spacing={2} alignItems="center">
-            {online ? (
-              <StyledBadge
+            {dotColor ? (
+              <Badge
                 overlap="circular"
                 anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
                 variant="dot"
+                sx={{
+                  '& .MuiBadge-badge': {
+                    backgroundColor: dotColor,
+                    color: dotColor,
+                    boxShadow: (theme) => `0 0 0 2px ${theme.palette.background.paper}`,
+                  },
+                }}
               >
-                <Avatar src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`} />
-              </StyledBadge>
+                <Avatar
+                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`}
+                  sx={{ transition: "filter 0.2s" }}
+                />
+              </Badge>
             ) : (
-              <Avatar src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`} />
+              <Avatar
+                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`}
+                sx={{ filter: "grayscale(75%) opacity(0.7)", transition: "filter 0.2s" }}
+              />
             )}
 
             <Stack spacing={0.3}>

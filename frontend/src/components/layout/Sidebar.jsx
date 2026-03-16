@@ -18,7 +18,7 @@ import { useContext } from "react";
 const Sidebar = () => {
   const { user } = useAuth();
   const { logout } = useContext(AuthContext);
-  const { activeTab, setActiveTab, userStatus, setUserStatus, isOnline } = useChat();
+  const { activeTab, setActiveTab, userStatus, setUserStatus } = useChat();
 
   const [statusMenuAnchor, setStatusMenuAnchor] = React.useState(null);
 
@@ -225,7 +225,7 @@ const Sidebar = () => {
             <CustomAvatar
               alt={avatarAlt}
               src={avatarSrc}
-              isOnline={isOnline}
+              status={userStatus}
               size={44}
               sx={{ cursor: "pointer" }}
             />

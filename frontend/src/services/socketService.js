@@ -52,8 +52,8 @@ export function getSocket() {
 /* ── Convenience emitters ───────────────────────────────────────────────── */
 
 /** Join a chat room and listen for history. */
-export function joinRoom(roomId) {
-  socket?.emit("room:join", { roomId });
+export function joinRoom(roomId, otherUserId = null) {
+  socket?.emit("room:join", { roomId, otherUserId });
 }
 
 /** Leave a chat room. */
@@ -79,6 +79,11 @@ export function stopTyping(roomId) {
 /** Broadcast a code execution result to a room. */
 export function broadcastCodeResult({ roomId, snippetId, output, error, language }) {
   socket?.emit("code:result", { roomId, snippetId, output, error, language });
+}
+
+/** Set this user's presence status (online/away/busy/offline). */
+export function setPresenceStatus(status) {
+  socket?.emit("presence:set", { status });
 }
 
 /* ── Convenience listeners ──────────────────────────────────────────────── */

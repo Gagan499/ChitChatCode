@@ -1,6 +1,7 @@
-import React, { createContext, useState, useCallback, useMemo } from "react";
-
-
+import React, { createContext, useState, useCallback, useMemo, useEffect, useContext } from "react";
+import { AuthContext } from "./AuthContext";
+import { getUsers } from "../services/api";
+import { connectSocket, disconnectSocket, onSocketEvent, setPresenceStatus } from "../services/socketService";
 
 /* ─── Status options ─────────────────────────────────────────────────────── */
 export const STATUS_OPTIONS = [
@@ -14,20 +15,161 @@ export const STATUS_OPTIONS = [
 export const ChatContext = createContext(null);
 
 export const ChatProvider = ({ children }) => {
+  const { user, token } = useContext(AuthContext);
+
   /* ── State ── */
   const [chats, setChats]           = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [activeTab, setActiveTab]   = useState(0); // 0=chats 1=contacts 2=calls 3=settings
-  const [userStatus, setUserStatus] = useState("online"); // online | away | busy | offline
+  const [userStatus, setUserStatus] = useState(() => {
+    try {
+      return localStorage.getItem("chitchat:userStatus") || "online";
+    } catch {
+      return "online";
+    }
+  }); // online | away | busy | offline
   const [searchQuery, setSearchQuery] = useState("");
 
-  /* ── Derived ── */
-  const selectedConversation = useMemo(
-    () => chats.find((c) => c.id === selectedId)?.conversation ?? {},
-    [chats, selectedId]
-  );
+  // Persist the selected status so it survives reloads.
+  useEffect(() => {
+    try {
+      localStorage.setItem("chitchat:userStatus", userStatus);
+    } catch {
+      // ignore
+    }
+  }, [userStatus]);
 
-  const isOnline = userStatus === "online";
+  // Load other users as contacts once authenticated
+  useEffect(() => {
+    if (!user) {
+      setChats([]);
+      setSelectedId(null);
+      return;
+    }
+
+    const loadContacts = async () => {
+      try {
+        const { data } = await getUsers();
+        const contacts = (Array.isArray(data) ? data : []).map((u) => ({
+          id: u.id,
+          name: u.username || u.email,
+          message: "",
+          time: "",
+          status: "offline",
+          online: false,
+          pinned: false,
+          archived: false,
+          isGroup: false,
+          conversation: {
+            participant: {
+              id: u.id,
+              name: u.username || u.email,
+              avatar: u.avatar || u.profile_picture || null,
+              status: "Offline",
+            },
+            messages: [],
+          },
+        }));
+
+        setChats(contacts);
+        setSelectedId(contacts.length ? contacts[0].id : null);
+      } catch (err) {
+        console.warn("Failed to load contacts", err);
+      }
+    };
+
+    loadContacts();
+  }, [user]);
+
+  // Keep presence updated using socket events
+  useEffect(() => {
+    if (!token) return; // if token not available, skip
+
+    const socket = connectSocket(token);
+
+    const normalizePresenceList = (list) => {
+      if (!Array.isArray(list)) return [];
+      return list
+        .map((item) => {
+          if (typeof item === "string" || typeof item === "number") {
+            return { userId: item, status: "online" };
+          }
+          if (item && typeof item === "object" && item.userId) {
+            return { userId: item.userId, status: item.status || "online" };
+          }
+          return null;
+        })
+        .filter(Boolean);
+    };
+
+    const offPresenceUpdate = onSocketEvent("presence:update", ({ userId, status }) => {
+      if (!userId) return;
+
+      // update status of contacts in the list
+      setChats((prev) =>
+        prev.map((chat) =>
+          String(chat.id) === String(userId)
+            ? { ...chat, status: status || "offline", online: status === "online" }
+            : chat
+        )
+      );
+
+      // update self status too (only if we are offline or were offline)
+      if (userId === user?.id) {
+        setUserStatus((prev) => {
+          if (status === "offline") return "offline";
+          return prev === "offline" ? status || "online" : prev;
+        });
+      }
+    });
+
+    const offPresenceState = onSocketEvent("presence:state", ({ online }) => {
+      const list = normalizePresenceList(online);
+      if (!list.length) return;
+
+      setChats((prev) =>
+        prev.map((chat) => {
+          const found = list.find((p) => String(p.userId) === String(chat.id));
+          if (!found) return { ...chat, status: "offline", online: false };
+          return { ...chat, status: found.status || "online", online: found.status === "online" };
+        })
+      );
+    });
+
+    // Notify server of our current status as soon as we connect
+    setPresenceStatus(userStatus);
+
+    // cleanup on logout / token change
+    return () => {
+      offPresenceUpdate();
+      offPresenceState();
+      disconnectSocket();
+    };
+  }, [token, user?.id, setUserStatus, userStatus]);
+  /* ── Derived ── */
+  const selectedConversation = useMemo(() => {
+    const chat = chats.find((c) => c.id === selectedId);
+    if (!chat) return {};
+
+    const conv = chat.conversation || {};
+    const participant = conv.participant || {};
+
+    // Keep the header status in sync with presence values (online/away/busy/offline).
+    // For groups we keep whatever status text is already set.
+    const derivedStatus = chat.isGroup
+      ? participant.status
+      : (chat.status || "offline").replace(/^./, (c) => c.toUpperCase());
+
+    return {
+      ...conv,
+      participant: {
+        ...participant,
+        status: derivedStatus,
+      },
+    };
+  }, [chats, selectedId]);
+
+  const isOnline = userStatus !== "offline";
 
   /* ── Actions ── */
   const togglePin = useCallback((id) => {
@@ -170,6 +312,13 @@ export const ChatProvider = ({ children }) => {
     );
   }, [chats, searchQuery]);
 
+  const updateChatPreview = useCallback((userId, { message, time }) => {
+    if (!userId) return;
+    setChats((prev) =>
+      prev.map((c) => (c.id === userId ? { ...c, message, time } : c))
+    );
+  }, []);
+
   const value = {
     /* state */
     chats,
@@ -195,6 +344,7 @@ export const ChatProvider = ({ children }) => {
     toggleAdmin,
     deleteGroup,
     exitGroup,
+    updateChatPreview,
   };
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;

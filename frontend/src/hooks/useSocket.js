@@ -24,7 +24,7 @@ import {
  *   handleTypingStart()        — emit typing start
  *   handleTypingStop()         — emit typing stop
  */
-export function useSocket(roomId, token) {
+export function useSocket(roomId, token, myId) {
   const [messages,    setMessages]    = useState([]);
   const [typingUsers, setTypingUsers] = useState({});
   const [connected,   setConnected]   = useState(false);
@@ -35,24 +35,32 @@ export function useSocket(roomId, token) {
   useEffect(() => {
     if (!token || !roomId) return;
 
+    // Reset message list when switching rooms
+    setMessages([]);
+
     // Connect (idempotent if already connected)
     const socket = connectSocket(token);
 
     // Connection status
-    const offConnect    = onSocketEvent("connect",    () => setConnected(true));
+    const offConnect    = onSocketEvent("connect",    () => {
+      setConnected(true);
+      // Rejoin room and reload history on reconnect
+      joinRoom(roomId);
+      // Note: history will be sent by the server on join
+    });
     const offDisconnect = onSocketEvent("disconnect", () => setConnected(false));
 
     // Room history (on join)
     const offHistory = onSocketEvent("room:history", ({ roomId: rid, messages: hist }) => {
       if (rid === roomId) {
-        setMessages(hist.map(normalizeMessage));
+        setMessages(hist.map((m) => normalizeMessage(m, myId)));
       }
     });
 
     // Incoming message
     const offNew = onSocketEvent("message:new", (msg) => {
       if (msg.roomId === roomId) {
-        setMessages((prev) => [...prev, normalizeMessage(msg)]);
+        setMessages((prev) => [...prev, normalizeMessage(msg, myId)]);
       }
     });
 
@@ -115,15 +123,18 @@ export function useSocket(roomId, token) {
 }
 
 /* ── Normalise different message shapes from DB vs socket ─────────────── */
-function normalizeMessage(msg) {
+function normalizeMessage(msg, myId) {
+  const senderId = msg.User?.id || msg.sender?.id;
   return {
     id:          msg.id,
+    message:     msg.content,
     content:     msg.content,
-    messageType: msg.message_type || msg.messageType || "text",
+    messageType: msg.message_type || msg.messageType || msg.type || "text",
+    type:        msg.type || msg.message_type || msg.messageType || "text",
     time:        msg.created_at   || msg.createdAt,
-    isSender:    false, // caller can override with sender.id === myId check
+    isSender:    Boolean(myId && senderId && senderId === myId),
     sender: {
-      id:       msg.User?.id       || msg.sender?.id,
+      id:       senderId,
       username: msg.User?.username || msg.sender?.username,
       avatar:   msg.User?.avatar   || msg.sender?.avatar,
     },

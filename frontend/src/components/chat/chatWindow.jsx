@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import {
   Box,
   Stack,
@@ -54,6 +54,9 @@ import CloseIcon from "@mui/icons-material/Close";
 import MessageBubble from "./MessageBubble";
 import ChatInput from "./ChatInput";
 import { useChat } from "../../hooks/useChat";
+import { useAuth } from "../../hooks/useAuth";
+import { useSocket } from "../../hooks/useSocket";
+import { getDirectRoom } from "../../services/api";
 
 
 
@@ -620,12 +623,16 @@ const ContactInfoPanel = ({ participant, avatarUrl, onClose }) => {
 
 /* ─── ChatWindow ─────────────────────────────────────────────────────────── */
 const ChatWindow = ({ conversation = {} }) => {
-  const { participant = {}, messages = [] } = conversation;
-  const { chats, selectedId, setActiveTab } = useChat();
+  const { participant = {}, messages: initialMessages = [] } = conversation;
+  const { chats, selectedId, setActiveTab, updateChatPreview } = useChat();
+  const { user, token } = useAuth();
   const [infoOpen, setInfoOpen] = useState(false);
+  const [roomId, setRoomId] = useState(null);
+  const [isRoomLoading, setIsRoomLoading] = useState(false);
 
   const currentChat = chats.find((c) => c.id === selectedId);
   const isGroup = Boolean(currentChat?.isGroup);
+  const otherUserId = isGroup ? null : participant?.id;
 
   const avatarUrl =
     participant.avatar ||
@@ -640,6 +647,65 @@ const ChatWindow = ({ conversation = {} }) => {
       setInfoOpen((p) => !p);
     }
   };
+
+  // Load or create 1:1 chat room when a contact is selected
+  useEffect(() => {
+    if (!otherUserId || !user?.id) {
+      setRoomId(null);
+      return;
+    }
+
+    let isCancelled = false;
+    const loadRoom = async () => {
+      setIsRoomLoading(true);
+      try {
+        const { data } = await getDirectRoom(otherUserId);
+        if (!isCancelled) {
+          setRoomId(data.roomId);
+        }
+      } catch (err) {
+        console.warn("Failed to load chat room:", err);
+      } finally {
+        if (!isCancelled) setIsRoomLoading(false);
+      }
+    };
+
+    loadRoom();
+    return () => {
+      isCancelled = true;
+    };
+  }, [otherUserId, user?.id]);
+
+  const messagesContainerRef = useRef(null);
+  const messagesEndRef = useRef(null);
+
+  const { messages: socketMessages, typingUsers, sendMessage, handleTypingStart, handleTypingStop } = useSocket(roomId, token, user?.id);
+  const renderedMessages = socketMessages.length ? socketMessages : initialMessages;
+
+  const typingUsersList = useMemo(() => Object.values(typingUsers || {}), [typingUsers]);
+  const typingIndicatorText = useMemo(() => {
+    if (typingUsersList.length === 0) return "";
+    if (typingUsersList.length === 1) return `${typingUsersList[0]} is typing...`;
+    if (typingUsersList.length === 2) return `${typingUsersList[0]} and ${typingUsersList[1]} are typing...`;
+    return `${typingUsersList.slice(0, -1).join(", ")} and ${typingUsersList.slice(-1)} are typing...`;
+  }, [typingUsersList]);
+
+  // Auto-scroll to latest message when chat updates
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    // Scroll down smoothly (will be instant if already at bottom)
+    container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
+  }, [renderedMessages.length, typingUsersList.length]);
+
+  // Update chat preview (last message/time) as we receive new messages
+  useEffect(() => {
+    if (!otherUserId || renderedMessages.length === 0) return;
+    const last = renderedMessages[renderedMessages.length - 1];
+    const time = last.time ? new Date(last.time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "";
+    updateChatPreview(otherUserId, { message: last.content, time });
+  }, [renderedMessages, otherUserId, updateChatPreview]);
 
   return (
     <Box sx={{ display: "flex", height: "100%", position: "relative", overflow: "hidden" }}>
@@ -665,7 +731,21 @@ const ChatWindow = ({ conversation = {} }) => {
                 <Typography variant="subtitle2" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
                   {participant.name || "Unknown"}
                 </Typography>
-                <Typography variant="caption" sx={{ fontSize: "11px", color: isGroup ? "#7c3aed" : participant.status === "Online" ? "#10b981" : "#9ca3af" }}>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    fontSize: "11px",
+                    color: isGroup
+                      ? "#7c3aed"
+                      : participant.status?.toLowerCase() === "online"
+                      ? "#10b981"
+                      : participant.status?.toLowerCase() === "away"
+                      ? "#f59e0b"
+                      : participant.status?.toLowerCase() === "busy"
+                      ? "#ef4444"
+                      : "#9ca3af",
+                  }}
+                >
                   {isGroup
                     ? `${currentChat?.members?.length || 0} members · tap for info`
                     : participant.status}
@@ -692,14 +772,34 @@ const ChatWindow = ({ conversation = {} }) => {
         </Box>
 
         {/* Messages */}
-        <Box sx={{ flex: 1, overflowY: "auto", p: 3 }}>
+        <Box ref={messagesContainerRef} sx={{ flex: 1, overflowY: "auto", p: 3 }}>
           <Typography variant="caption" sx={{ display: "block", textAlign: "center", color: "#9ca3af", mb: 3 }}>Today</Typography>
-          {messages.map((msg, idx) => (
+          {renderedMessages.map((msg, idx) => (
             <MessageBubble key={idx} message={msg.message} time={msg.time} isSender={msg.isSender} type={msg.type} fileData={msg.fileData} />
           ))}
+          <div ref={messagesEndRef} />
         </Box>
 
-        <ChatInput />
+        {/* Typing indicator below messages, above the input */}
+        {typingIndicatorText && (
+          <Box sx={{ px: 3, pb: 1 }}>
+            <Typography variant="caption" sx={{ color: "#64748b", fontStyle: "italic" }}>
+              {typingIndicatorText}
+            </Typography>
+          </Box>
+        )}
+
+        {otherUserId && (isRoomLoading || !roomId) ? (
+          <Box sx={{ p: 4, textAlign: "center", color: "#64748b" }}>
+            {isRoomLoading ? "Loading chat…" : "Select a contact to start chatting."}
+          </Box>
+        ) : (
+          <ChatInput
+            onSend={(payload) => sendMessage(payload.text, payload.file ? "file" : "text")}
+            onTypingStart={handleTypingStart}
+            onTypingStop={handleTypingStop}
+          />
+        )}
       </Stack>
 
       {/* Slide-in info panel */}

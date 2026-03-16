@@ -392,7 +392,7 @@ const ChatList = ({
                     name={chat.name}
                     message={chat.message}
                     time={chat.time}
-                    online={chat.online}
+                    status={chat.status}
                     selected={chat.id === selectedChatId}
                     pinned={chat.pinned}
                     archived={false}
@@ -428,7 +428,7 @@ const ChatList = ({
                     name={chat.name}
                     message={chat.message}
                     time={chat.time}
-                    online={chat.online}
+                    status={chat.status}
                     selected={chat.id === selectedChatId}
                     pinned={chat.pinned}
                     archived={false}

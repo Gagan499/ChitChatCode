@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Stack,
@@ -39,6 +39,8 @@ import {
   Globe,
 } from "@phosphor-icons/react";
 import { useAuth } from "../hooks/useAuth";
+import { useChat } from "../hooks/useChat";
+import { updateProfile } from "../services/api";
 
 /* ─── Shared section wrapper ─────────────────────────────────────────────── */
 const Section = ({ title, children }) => (
@@ -122,29 +124,164 @@ const ACCENTS = ["#5B96F7", "#7c3aed", "#10b981", "#f59e0b", "#ef4444", "#ec4899
 /* ─── Settings Page ──────────────────────────────────────────────────────── */
 const SettingsPage = () => {
   const { user, logout } = useAuth();
+  const { userStatus, setUserStatus } = useChat();
 
   const [activeSection, setActiveSection] = useState("profile");
 
   // Appearance
-  const [darkMode, setDarkMode] = useState(false);
-  const [fontSize, setFontSize] = useState(14);
-  const [accent, setAccent] = useState("#5B96F7");
-  const [wallpaper, setWallpaper] = useState("default");
+  const [darkMode, setDarkMode] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("chitchat:darkMode") || "false");
+    } catch {
+      return false;
+    }
+  });
+  const [fontSize, setFontSize] = useState(() => {
+    try {
+      return parseInt(localStorage.getItem("chitchat:fontSize") || "14");
+    } catch {
+      return 14;
+    }
+  });
+  const [accent, setAccent] = useState(() => {
+    try {
+      return localStorage.getItem("chitchat:accent") || "#5B96F7";
+    } catch {
+      return "#5B96F7";
+    }
+  });
+  const [wallpaper, setWallpaper] = useState(() => {
+    try {
+      return localStorage.getItem("chitchat:wallpaper") || "default";
+    } catch {
+      return "default";
+    }
+  });
 
   // Notifications
-  const [notifMessages, setNotifMessages] = useState(true);
-  const [notifSounds, setNotifSounds] = useState(true);
-  const [notifPreviews, setNotifPreviews] = useState(true);
-  const [notifDesktop, setNotifDesktop] = useState(false);
+  const [notifMessages, setNotifMessages] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("chitchat:notifMessages") || "true");
+    } catch {
+      return true;
+    }
+  });
+  const [notifSounds, setNotifSounds] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("chitchat:notifSounds") || "true");
+    } catch {
+      return true;
+    }
+  });
+  const [notifPreviews, setNotifPreviews] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("chitchat:notifPreviews") || "true");
+    } catch {
+      return true;
+    }
+  });
+  const [notifDesktop, setNotifDesktop] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("chitchat:notifDesktop") || "false");
+    } catch {
+      return false;
+    }
+  });
 
   // Privacy
-  const [lastSeen, setLastSeen] = useState("everyone");
-  const [readReceipts, setReadReceipts] = useState(true);
-  const [onlineStatus, setOnlineStatus] = useState(true);
+  const [lastSeen, setLastSeen] = useState(() => {
+    try {
+      return localStorage.getItem("chitchat:lastSeen") || "everyone";
+    } catch {
+      return "everyone";
+    }
+  });
+  const [readReceipts, setReadReceipts] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("chitchat:readReceipts") || "true");
+    } catch {
+      return true;
+    }
+  });
 
   // Profile edit
   const [editName, setEditName] = useState(user?.name || user?.username || "User");
   const [editAbout, setEditAbout] = useState("Hey there! I am using ChitChatCode 💬");
+  const [saving, setSaving] = useState(false);
+
+  // Persist settings
+  useEffect(() => {
+    try {
+      localStorage.setItem("chitchat:darkMode", JSON.stringify(darkMode));
+    } catch {}
+  }, [darkMode]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("chitchat:fontSize", fontSize.toString());
+    } catch {}
+  }, [fontSize]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("chitchat:accent", accent);
+    } catch {}
+  }, [accent]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("chitchat:wallpaper", wallpaper);
+    } catch {}
+  }, [wallpaper]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("chitchat:notifMessages", JSON.stringify(notifMessages));
+    } catch {}
+  }, [notifMessages]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("chitchat:notifSounds", JSON.stringify(notifSounds));
+    } catch {}
+  }, [notifSounds]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("chitchat:notifPreviews", JSON.stringify(notifPreviews));
+    } catch {}
+  }, [notifPreviews]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("chitchat:notifDesktop", JSON.stringify(notifDesktop));
+    } catch {}
+  }, [notifDesktop]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("chitchat:lastSeen", lastSeen);
+    } catch {}
+  }, [lastSeen]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("chitchat:readReceipts", JSON.stringify(readReceipts));
+    } catch {}
+  }, [readReceipts]);
+
+  // Handle profile save
+  const handleSaveProfile = async () => {
+    setSaving(true);
+    try {
+      await updateProfile({ name: editName, about: editAbout });
+      // Optionally update user context or show success
+    } catch (err) {
+      console.warn("Failed to save profile", err);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const avatarSrc =
     user?.avatar ||
@@ -332,6 +469,8 @@ const SettingsPage = () => {
                 <Button
                   variant="contained"
                   disableElevation
+                  onClick={handleSaveProfile}
+                  disabled={saving}
                   sx={{
                     alignSelf: "flex-end",
                     borderRadius: "10px",
@@ -341,7 +480,7 @@ const SettingsPage = () => {
                     "&:hover": { background: "#3b7ef4" },
                   }}
                 >
-                  Save Changes
+                  {saving ? "Saving..." : "Save Changes"}
                 </Button>
               </Stack>
             </Section>
@@ -442,7 +581,7 @@ const SettingsPage = () => {
                 label="Show Online Status"
                 sub="Let others know when you're online"
                 action={
-                  <Switch checked={onlineStatus} onChange={() => setOnlineStatus(!onlineStatus)} size="small"
+                  <Switch checked={userStatus === "online"} onChange={(e) => setUserStatus(e.target.checked ? "online" : "offline")} size="small"
                     sx={{ "& .MuiSwitch-switchBase.Mui-checked": { color: "#5B96F7" }, "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": { backgroundColor: "#5B96F7" } }}
                   />
                 }

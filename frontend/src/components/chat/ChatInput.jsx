@@ -3,7 +3,7 @@ import { Box, Stack, IconButton, InputBase, Chip } from "@mui/material";
 import { Paperclip, PaperPlane, Smiley, X } from "@phosphor-icons/react";
 import EmojiPicker from "emoji-picker-react";
 
-const ChatInput = ({ onSend }) => {
+const ChatInput = ({ onSend, onTypingStart, onTypingStop }) => {
   const [message, setMessage] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [attachedFile, setAttachedFile] = useState(null);
@@ -45,9 +45,15 @@ const ChatInput = ({ onSend }) => {
     const trimmed = message.trim();
     if (!trimmed && !attachedFile) return;
     if (onSend) onSend({ text: trimmed, file: attachedFile ?? null });
+    if (onTypingStop) onTypingStop();
     setMessage("");
     setAttachedFile(null);
     setShowEmojiPicker(false);
+  };
+
+  const handleChange = (e) => {
+    setMessage(e.target.value);
+    if (onTypingStart) onTypingStart();
   };
 
   const handleKeyDown = (e) => {
@@ -152,7 +158,7 @@ const ChatInput = ({ onSend }) => {
             multiline
             maxRows={4}
             value={message}
-            onChange={(e) => setMessage(e.target.value)}
+            onChange={handleChange}
             onKeyDown={handleKeyDown}
             sx={{ fontSize: "14px" }}
           />

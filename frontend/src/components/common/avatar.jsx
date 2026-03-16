@@ -1,29 +1,12 @@
-import React from 'react';
-import { Avatar as MuiAvatar, Badge, styled } from '@mui/material';
+﻿import React from 'react';
+import { Avatar as MuiAvatar, Badge } from '@mui/material';
 
-// Custom styled badge for the green "online" indicator
-const StyledBadge = styled(Badge)(({ theme }) => ({
-  '& .MuiBadge-badge': {
-    backgroundColor: '#44b700',
-    color: '#44b700',
-    boxShadow: `0 0 0 2px ${theme.palette.background.paper}`,
-    '&::after': {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      width: '100%',
-      height: '100%',
-      borderRadius: '50%',
-      animation: 'ripple 1.2s infinite ease-in-out',
-      border: '1px solid currentColor',
-      content: '""',
-    },
-  },
-  '@keyframes ripple': {
-    '0%': { transform: 'scale(.8)', opacity: 1 },
-    '100%': { transform: 'scale(2.4)', opacity: 0 },
-  },
-}));
+// Map status -> dot color
+const STATUS_COLORS = {
+  online: '#44b700',
+  away: '#f59e0b',
+  busy: '#ef4444',
+};
 
 // Palette of gradients — picked by hashing the user's name
 const AVATAR_GRADIENTS = [
@@ -53,10 +36,14 @@ function getInitials(name = '') {
   return name.slice(0, 2).toUpperCase();
 }
 
-const CustomAvatar = ({ src, alt, size = 44, isOnline = false, sx, ...props }) => {
-  const gradient   = gradientFromName(alt || '');
-  const initials   = getInitials(alt || '');
-  const fontSize   = Math.max(10, Math.round(size * 0.38));
+const CustomAvatar = ({ src, alt, size = 44, status, isOnline = false, sx, ...props }) => {
+  const gradient = gradientFromName(alt || '');
+  const initials = getInitials(alt || '');
+  const fontSize = Math.max(10, Math.round(size * 0.38));
+
+  // Prefer explicit status; fallback to boolean online flag for backwards compatibility.
+  const statusKey = status || (isOnline ? 'online' : null);
+  const statusColor = statusKey ? STATUS_COLORS[statusKey] : null;
 
   const avatarComponent = (
     <MuiAvatar
@@ -79,19 +66,39 @@ const CustomAvatar = ({ src, alt, size = 44, isOnline = false, sx, ...props }) =
     </MuiAvatar>
   );
 
-  if (isOnline) {
-    return (
-      <StyledBadge
-        overlap="circular"
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        variant="dot"
-      >
-        {avatarComponent}
-      </StyledBadge>
-    );
-  }
+  if (!statusColor) return avatarComponent;
 
-  return avatarComponent;
+  return (
+    <Badge
+      overlap="circular"
+      anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      variant="dot"
+      sx={{
+        '& .MuiBadge-badge': {
+          backgroundColor: statusColor,
+          color: statusColor,
+          boxShadow: (theme) => `0 0 0 2px ${theme.palette.background.paper}`,
+          '&::after': {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            borderRadius: '50%',
+            animation: 'ripple 1.2s infinite ease-in-out',
+            border: '1px solid currentColor',
+            content: '""',
+          },
+        },
+        '@keyframes ripple': {
+          '0%': { transform: 'scale(.8)', opacity: 1 },
+          '100%': { transform: 'scale(2.4)', opacity: 0 },
+        },
+      }}
+    >
+      {avatarComponent}
+    </Badge>
+  );
 };
 
 export default CustomAvatar;

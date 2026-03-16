@@ -5,6 +5,8 @@ const cors = require("cors");
 const sequelize = require("./config/database");
 require("./models"); // load associations
 const authRoutes  = require("./routes/authRoutes");
+const userRoutes  = require("./routes/userRoutes");
+const roomRoutes  = require("./routes/roomRoutes");
 const setupSockets = require("./sockets/socketHandler");
 
 const app = express();
@@ -17,6 +19,8 @@ app.use(express.json());
 
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/rooms", roomRoutes);
 
 // 🔹 Test DB Connection First
 sequelize.authenticate()
