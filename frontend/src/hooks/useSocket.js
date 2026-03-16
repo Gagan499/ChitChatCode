@@ -25,9 +25,9 @@ import {
  *   handleTypingStop()         — emit typing stop
  */
 export function useSocket(roomId, token, myId) {
-  const [messages,    setMessages]    = useState([]);
+  const [messages, setMessages] = useState([]);
   const [typingUsers, setTypingUsers] = useState({});
-  const [connected,   setConnected]   = useState(false);
+  const [connected, setConnected] = useState(false);
 
   // Typing debounce timer ref
   const typingTimer = useRef(null);
@@ -42,20 +42,25 @@ export function useSocket(roomId, token, myId) {
     const socket = connectSocket(token);
 
     // Connection status
-    const offConnect    = onSocketEvent("connect",    () => {
+    const offConnect = onSocketEvent("connect", () => {
       setConnected(true);
       // Rejoin room and reload history on reconnect
       joinRoom(roomId);
       // Note: history will be sent by the server on join
     });
-    const offDisconnect = onSocketEvent("disconnect", () => setConnected(false));
+    const offDisconnect = onSocketEvent("disconnect", () =>
+      setConnected(false),
+    );
 
     // Room history (on join)
-    const offHistory = onSocketEvent("room:history", ({ roomId: rid, messages: hist }) => {
-      if (rid === roomId) {
-        setMessages(hist.map((m) => normalizeMessage(m, myId)));
-      }
-    });
+    const offHistory = onSocketEvent(
+      "room:history",
+      ({ roomId: rid, messages: hist }) => {
+        if (rid === roomId) {
+          setMessages(hist.map((m) => normalizeMessage(m, myId)));
+        }
+      },
+    );
 
     // Incoming message
     const offNew = onSocketEvent("message:new", (msg) => {
@@ -65,21 +70,27 @@ export function useSocket(roomId, token, myId) {
     });
 
     // Typing indicators
-    const offTypingStart = onSocketEvent("typing:start", ({ roomId: rid, userId, username }) => {
-      if (rid === roomId) {
-        setTypingUsers((prev) => ({ ...prev, [userId]: username }));
-      }
-    });
+    const offTypingStart = onSocketEvent(
+      "typing:start",
+      ({ roomId: rid, userId, username }) => {
+        if (rid === roomId) {
+          setTypingUsers((prev) => ({ ...prev, [userId]: username }));
+        }
+      },
+    );
 
-    const offTypingStop = onSocketEvent("typing:stop", ({ roomId: rid, userId }) => {
-      if (rid === roomId) {
-        setTypingUsers((prev) => {
-          const next = { ...prev };
-          delete next[userId];
-          return next;
-        });
-      }
-    });
+    const offTypingStop = onSocketEvent(
+      "typing:stop",
+      ({ roomId: rid, userId }) => {
+        if (rid === roomId) {
+          setTypingUsers((prev) => {
+            const next = { ...prev };
+            delete next[userId];
+            return next;
+          });
+        }
+      },
+    );
 
     // Join the room
     joinRoom(roomId);
@@ -97,12 +108,15 @@ export function useSocket(roomId, token, myId) {
   }, [roomId, token]);
 
   /* ── Send message ─────────────────────────────────────────────────────── */
-  const sendMessage = useCallback((content, messageType = "text") => {
-    if (!content?.trim() || !roomId) return;
-    emitMessage({ roomId, content, messageType });
-    stopTyping(roomId); // stop typing when message is sent
-    clearTimeout(typingTimer.current);
-  }, [roomId]);
+  const sendMessage = useCallback(
+    (content, messageType = "text") => {
+      if (!content?.trim() || !roomId) return;
+      emitMessage({ roomId, content, messageType });
+      stopTyping(roomId); // stop typing when message is sent
+      clearTimeout(typingTimer.current);
+    },
+    [roomId],
+  );
 
   /* ── Typing helpers ───────────────────────────────────────────────────── */
   const handleTypingStart = useCallback(() => {
@@ -119,24 +133,31 @@ export function useSocket(roomId, token, myId) {
     stopTyping(roomId);
   }, [roomId]);
 
-  return { messages, typingUsers, connected, sendMessage, handleTypingStart, handleTypingStop };
+  return {
+    messages,
+    typingUsers,
+    connected,
+    sendMessage,
+    handleTypingStart,
+    handleTypingStop,
+  };
 }
 
 /* ── Normalise different message shapes from DB vs socket ─────────────── */
 function normalizeMessage(msg, myId) {
   const senderId = msg.User?.id || msg.sender?.id;
   return {
-    id:          msg.id,
-    message:     msg.content,
-    content:     msg.content,
+    id: msg.id,
+    message: msg.content,
+    content: msg.content,
     messageType: msg.message_type || msg.messageType || msg.type || "text",
-    type:        msg.type || msg.message_type || msg.messageType || "text",
-    time:        msg.created_at   || msg.createdAt,
-    isSender:    Boolean(myId && senderId && senderId === myId),
+    type: msg.type || msg.message_type || msg.messageType || "text",
+    time: msg.created_at || msg.createdAt,
+    isSender: Boolean(myId && senderId && senderId === myId),
     sender: {
-      id:       senderId,
+      id: senderId,
       username: msg.User?.username || msg.sender?.username,
-      avatar:   msg.User?.avatar   || msg.sender?.avatar,
+      avatar: msg.User?.avatar || msg.sender?.avatar,
     },
   };
 }
