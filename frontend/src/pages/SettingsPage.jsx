@@ -88,7 +88,9 @@ const SettingRow = ({ icon, label, sub, action, danger, onClick, noPad }) => (
     onClick={onClick}
   >
     {icon && (
-      <ListItemIcon sx={{ minWidth: 36, color: danger ? "#ef4444" : "#5B96F7" }}>
+      <ListItemIcon
+        sx={{ minWidth: 36, color: danger ? "#ef4444" : "#5B96F7" }}
+      >
         {icon}
       </ListItemIcon>
     )}
@@ -96,14 +98,21 @@ const SettingRow = ({ icon, label, sub, action, danger, onClick, noPad }) => (
       primary={
         <Typography
           variant="body2"
-          sx={{ fontWeight: 600, color: danger ? "#ef4444" : "#111827", fontSize: "13px" }}
+          sx={{
+            fontWeight: 600,
+            color: danger ? "#ef4444" : "#111827",
+            fontSize: "13px",
+          }}
         >
           {label}
         </Typography>
       }
       secondary={
         sub && (
-          <Typography variant="caption" sx={{ color: "#9ca3af", fontSize: "11px" }}>
+          <Typography
+            variant="caption"
+            sx={{ color: "#9ca3af", fontSize: "11px" }}
+          >
             {sub}
           </Typography>
         )
@@ -119,7 +128,15 @@ const SettingRow = ({ icon, label, sub, action, danger, onClick, noPad }) => (
 );
 
 /* ─── Accent colour picker ───────────────────────────────────────────────── */
-const ACCENTS = ["#5B96F7", "#7c3aed", "#10b981", "#f59e0b", "#ef4444", "#ec4899", "#06b6d4"];
+const ACCENTS = [
+  "#5B96F7",
+  "#7c3aed",
+  "#10b981",
+  "#f59e0b",
+  "#ef4444",
+  "#ec4899",
+  "#06b6d4",
+];
 
 /* ─── Settings Page ──────────────────────────────────────────────────────── */
 const SettingsPage = () => {
@@ -161,7 +178,9 @@ const SettingsPage = () => {
   // Notifications
   const [notifMessages, setNotifMessages] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem("chitchat:notifMessages") || "true");
+      return JSON.parse(
+        localStorage.getItem("chitchat:notifMessages") || "true",
+      );
     } catch {
       return true;
     }
@@ -175,14 +194,18 @@ const SettingsPage = () => {
   });
   const [notifPreviews, setNotifPreviews] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem("chitchat:notifPreviews") || "true");
+      return JSON.parse(
+        localStorage.getItem("chitchat:notifPreviews") || "true",
+      );
     } catch {
       return true;
     }
   });
   const [notifDesktop, setNotifDesktop] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem("chitchat:notifDesktop") || "false");
+      return JSON.parse(
+        localStorage.getItem("chitchat:notifDesktop") || "false",
+      );
     } catch {
       return false;
     }
@@ -198,15 +221,21 @@ const SettingsPage = () => {
   });
   const [readReceipts, setReadReceipts] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem("chitchat:readReceipts") || "true");
+      return JSON.parse(
+        localStorage.getItem("chitchat:readReceipts") || "true",
+      );
     } catch {
       return true;
     }
   });
 
   // Profile edit
-  const [editName, setEditName] = useState(user?.name || user?.username || "User");
-  const [editAbout, setEditAbout] = useState("Hey there! I am using ChitChatCode 💬");
+  const [editName, setEditName] = useState(
+    user?.name || user?.username || "User",
+  );
+  const [editAbout, setEditAbout] = useState(
+    "Hey there! I am using ChitChatCode 💬",
+  );
   const [saving, setSaving] = useState(false);
 
   // Persist settings
@@ -236,7 +265,10 @@ const SettingsPage = () => {
 
   useEffect(() => {
     try {
-      localStorage.setItem("chitchat:notifMessages", JSON.stringify(notifMessages));
+      localStorage.setItem(
+        "chitchat:notifMessages",
+        JSON.stringify(notifMessages),
+      );
     } catch {}
   }, [notifMessages]);
 
@@ -248,13 +280,19 @@ const SettingsPage = () => {
 
   useEffect(() => {
     try {
-      localStorage.setItem("chitchat:notifPreviews", JSON.stringify(notifPreviews));
+      localStorage.setItem(
+        "chitchat:notifPreviews",
+        JSON.stringify(notifPreviews),
+      );
     } catch {}
   }, [notifPreviews]);
 
   useEffect(() => {
     try {
-      localStorage.setItem("chitchat:notifDesktop", JSON.stringify(notifDesktop));
+      localStorage.setItem(
+        "chitchat:notifDesktop",
+        JSON.stringify(notifDesktop),
+      );
     } catch {}
   }, [notifDesktop]);
 
@@ -266,7 +304,10 @@ const SettingsPage = () => {
 
   useEffect(() => {
     try {
-      localStorage.setItem("chitchat:readReceipts", JSON.stringify(readReceipts));
+      localStorage.setItem(
+        "chitchat:readReceipts",
+        JSON.stringify(readReceipts),
+      );
     } catch {}
   }, [readReceipts]);
 
@@ -301,8 +342,16 @@ const SettingsPage = () => {
     { id: "default", label: "Default", bg: "#F0F4FA" },
     { id: "dark", label: "Dark", bg: "#1e1e2e" },
     { id: "light", label: "Light", bg: "#ffffff" },
-    { id: "gradient", label: "Gradient", bg: "linear-gradient(135deg,#667eea,#764ba2)" },
-    { id: "warm", label: "Warm", bg: "linear-gradient(135deg,#f6d365,#fda085)" },
+    {
+      id: "gradient",
+      label: "Gradient",
+      bg: "linear-gradient(135deg,#667eea,#764ba2)",
+    },
+    {
+      id: "warm",
+      label: "Warm",
+      bg: "linear-gradient(135deg,#f6d365,#fda085)",
+    },
   ];
 
   return (
@@ -334,14 +383,20 @@ const SettingsPage = () => {
                 borderRadius: "10px",
                 mb: 0.3,
                 width: "auto",
-                background: activeSection === item.id ? "#EAF2FE" : "transparent",
+                background:
+                  activeSection === item.id ? "#EAF2FE" : "transparent",
                 color: activeSection === item.id ? "#5B96F7" : "#374151",
                 fontWeight: activeSection === item.id ? 700 : 500,
-                "&:hover": { background: activeSection === item.id ? "#EAF2FE" : "#f1f5f9" },
+                "&:hover": {
+                  background: activeSection === item.id ? "#EAF2FE" : "#f1f5f9",
+                },
               }}
             >
               <ListItemIcon
-                sx={{ minWidth: 32, color: activeSection === item.id ? "#5B96F7" : "#6b7280" }}
+                sx={{
+                  minWidth: 32,
+                  color: activeSection === item.id ? "#5B96F7" : "#6b7280",
+                }}
               >
                 {item.icon}
               </ListItemIcon>
@@ -393,7 +448,6 @@ const SettingsPage = () => {
 
       {/* ── Content ── */}
       <Box sx={{ flex: 1, overflowY: "auto", p: 3 }}>
-
         {/* ── PROFILE ── */}
         {activeSection === "profile" && (
           <>
@@ -403,7 +457,11 @@ const SettingsPage = () => {
                 <Box sx={{ position: "relative", mb: 2 }}>
                   <Avatar
                     src={avatarSrc}
-                    sx={{ width: 96, height: 96, boxShadow: "0 4px 20px rgba(91,150,247,0.2)" }}
+                    sx={{
+                      width: 96,
+                      height: 96,
+                      boxShadow: "0 4px 20px rgba(91,150,247,0.2)",
+                    }}
                   />
                   <Tooltip title="Change photo">
                     <IconButton
@@ -486,11 +544,26 @@ const SettingsPage = () => {
             </Section>
 
             <Section title="Account">
-              <SettingRow icon={<DeviceMobile size={18} />} label="Linked Devices" sub="Manage your devices" onClick={() => {}} />
+              <SettingRow
+                icon={<DeviceMobile size={18} />}
+                label="Linked Devices"
+                sub="Manage your devices"
+                onClick={() => {}}
+              />
               <Divider sx={{ mx: 2 }} />
-              <SettingRow icon={<Globe size={18} />} label="Language" sub="English (US)" onClick={() => {}} />
+              <SettingRow
+                icon={<Globe size={18} />}
+                label="Language"
+                sub="English (US)"
+                onClick={() => {}}
+              />
               <Divider sx={{ mx: 2 }} />
-              <SettingRow icon={<ShieldCheck size={18} />} label="Two-Step Verification" sub="Add extra security" onClick={() => {}} />
+              <SettingRow
+                icon={<ShieldCheck size={18} />}
+                label="Two-Step Verification"
+                sub="Add extra security"
+                onClick={() => {}}
+              />
             </Section>
           </>
         )}
@@ -503,8 +576,16 @@ const SettingsPage = () => {
               label="Message Notifications"
               sub="Notify for new messages"
               action={
-                <Switch checked={notifMessages} onChange={() => setNotifMessages(!notifMessages)} size="small"
-                  sx={{ "& .MuiSwitch-switchBase.Mui-checked": { color: "#5B96F7" }, "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": { backgroundColor: "#5B96F7" } }}
+                <Switch
+                  checked={notifMessages}
+                  onChange={() => setNotifMessages(!notifMessages)}
+                  size="small"
+                  sx={{
+                    "& .MuiSwitch-switchBase.Mui-checked": { color: "#5B96F7" },
+                    "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+                      backgroundColor: "#5B96F7",
+                    },
+                  }}
                 />
               }
             />
@@ -514,8 +595,16 @@ const SettingsPage = () => {
               label="Notification Sounds"
               sub="Play sound for notifications"
               action={
-                <Switch checked={notifSounds} onChange={() => setNotifSounds(!notifSounds)} size="small"
-                  sx={{ "& .MuiSwitch-switchBase.Mui-checked": { color: "#5B96F7" }, "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": { backgroundColor: "#5B96F7" } }}
+                <Switch
+                  checked={notifSounds}
+                  onChange={() => setNotifSounds(!notifSounds)}
+                  size="small"
+                  sx={{
+                    "& .MuiSwitch-switchBase.Mui-checked": { color: "#5B96F7" },
+                    "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+                      backgroundColor: "#5B96F7",
+                    },
+                  }}
                 />
               }
             />
@@ -525,8 +614,16 @@ const SettingsPage = () => {
               label="Message Previews"
               sub="Show message content in notifications"
               action={
-                <Switch checked={notifPreviews} onChange={() => setNotifPreviews(!notifPreviews)} size="small"
-                  sx={{ "& .MuiSwitch-switchBase.Mui-checked": { color: "#5B96F7" }, "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": { backgroundColor: "#5B96F7" } }}
+                <Switch
+                  checked={notifPreviews}
+                  onChange={() => setNotifPreviews(!notifPreviews)}
+                  size="small"
+                  sx={{
+                    "& .MuiSwitch-switchBase.Mui-checked": { color: "#5B96F7" },
+                    "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+                      backgroundColor: "#5B96F7",
+                    },
+                  }}
                 />
               }
             />
@@ -536,8 +633,16 @@ const SettingsPage = () => {
               label="Desktop Notifications"
               sub="Show notifications on desktop"
               action={
-                <Switch checked={notifDesktop} onChange={() => setNotifDesktop(!notifDesktop)} size="small"
-                  sx={{ "& .MuiSwitch-switchBase.Mui-checked": { color: "#5B96F7" }, "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": { backgroundColor: "#5B96F7" } }}
+                <Switch
+                  checked={notifDesktop}
+                  onChange={() => setNotifDesktop(!notifDesktop)}
+                  size="small"
+                  sx={{
+                    "& .MuiSwitch-switchBase.Mui-checked": { color: "#5B96F7" },
+                    "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+                      backgroundColor: "#5B96F7",
+                    },
+                  }}
                 />
               }
             />
@@ -549,7 +654,10 @@ const SettingsPage = () => {
           <>
             <Section title="Who Can See">
               <Box sx={{ px: 2.5, py: 1.5 }}>
-                <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, fontSize: "13px" }}>
+                <Typography
+                  variant="body2"
+                  sx={{ fontWeight: 600, mb: 1, fontSize: "13px" }}
+                >
                   Last Seen & Online
                 </Typography>
                 <FormControl size="small" fullWidth>
@@ -570,8 +678,17 @@ const SettingsPage = () => {
                 label="Read Receipts"
                 sub="Show blue ticks when messages are read"
                 action={
-                  <Switch checked={readReceipts} onChange={() => setReadReceipts(!readReceipts)} size="small"
-                    sx={{ "& .MuiSwitch-switchBase.Mui-checked": { color: "#5B96F7" }, "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": { backgroundColor: "#5B96F7" } }}
+                  <Switch
+                    checked={readReceipts}
+                    onChange={() => setReadReceipts(!readReceipts)}
+                    size="small"
+                    sx={{
+                      "& .MuiSwitch-switchBase.Mui-checked": {
+                        color: "#5B96F7",
+                      },
+                      "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
+                        { backgroundColor: "#5B96F7" },
+                    }}
                   />
                 }
               />
@@ -581,18 +698,54 @@ const SettingsPage = () => {
                 label="Show Online Status"
                 sub="Let others know when you're online"
                 action={
-                  <Switch checked={userStatus === "online"} onChange={(e) => setUserStatus(e.target.checked ? "online" : "offline")} size="small"
-                    sx={{ "& .MuiSwitch-switchBase.Mui-checked": { color: "#5B96F7" }, "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": { backgroundColor: "#5B96F7" } }}
+                  <Switch
+                    checked={userStatus === "online"}
+                    onChange={(e) =>
+                      setUserStatus(e.target.checked ? "online" : "offline")
+                    }
+                    size="small"
+                    sx={{
+                      "& .MuiSwitch-switchBase.Mui-checked": {
+                        color: "#5B96F7",
+                      },
+                      "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
+                        { backgroundColor: "#5B96F7" },
+                    }}
                   />
                 }
               />
             </Section>
             <Section title="Security">
-              <SettingRow icon={<ShieldCheck size={18} />} label="End-to-End Encryption" sub="All messages are encrypted" action={<Chip label="Active" size="small" sx={{ background: "#d1fae5", color: "#065f46", fontWeight: 700, fontSize: "10px" }} />} />
+              <SettingRow
+                icon={<ShieldCheck size={18} />}
+                label="End-to-End Encryption"
+                sub="All messages are encrypted"
+                action={
+                  <Chip
+                    label="Active"
+                    size="small"
+                    sx={{
+                      background: "#d1fae5",
+                      color: "#065f46",
+                      fontWeight: 700,
+                      fontSize: "10px",
+                    }}
+                  />
+                }
+              />
               <Divider sx={{ mx: 2 }} />
-              <SettingRow icon={<Lock size={18} />} label="Change Password" onClick={() => {}} />
+              <SettingRow
+                icon={<Lock size={18} />}
+                label="Change Password"
+                onClick={() => {}}
+              />
               <Divider sx={{ mx: 2 }} />
-              <SettingRow icon={<Lock size={18} />} label="Two-Step Verification" sub="Adds a PIN when registering" onClick={() => {}} />
+              <SettingRow
+                icon={<Lock size={18} />}
+                label="Two-Step Verification"
+                sub="Adds a PIN when registering"
+                onClick={() => {}}
+              />
             </Section>
           </>
         )}
@@ -603,8 +756,16 @@ const SettingsPage = () => {
             <Section title="Theme">
               <Stack direction="row" spacing={2} sx={{ px: 2.5, py: 2 }}>
                 {[
-                  { id: false, icon: <SunHorizon size={22} weight="fill" />, label: "Light" },
-                  { id: true, icon: <Moon size={22} weight="fill" />, label: "Dark" },
+                  {
+                    id: false,
+                    icon: <SunHorizon size={22} weight="fill" />,
+                    label: "Light",
+                  },
+                  {
+                    id: true,
+                    icon: <Moon size={22} weight="fill" />,
+                    label: "Dark",
+                  },
                 ].map((t) => (
                   <Box
                     key={String(t.id)}
@@ -613,7 +774,10 @@ const SettingsPage = () => {
                       flex: 1,
                       py: 2,
                       borderRadius: "12px",
-                      border: darkMode === t.id ? "2px solid #5B96F7" : "2px solid #e8edf5",
+                      border:
+                        darkMode === t.id
+                          ? "2px solid #5B96F7"
+                          : "2px solid #e8edf5",
                       background: darkMode === t.id ? "#EAF2FE" : "#f8faff",
                       display: "flex",
                       flexDirection: "column",
@@ -625,7 +789,13 @@ const SettingsPage = () => {
                     }}
                   >
                     {t.icon}
-                    <Typography variant="caption" sx={{ fontWeight: darkMode === t.id ? 700 : 500, fontSize: "11px" }}>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        fontWeight: darkMode === t.id ? 700 : 500,
+                        fontSize: "11px",
+                      }}
+                    >
                       {t.label}
                     </Typography>
                   </Box>
@@ -645,15 +815,21 @@ const SettingsPage = () => {
                       borderRadius: "50%",
                       background: color,
                       cursor: "pointer",
-                      border: accent === color ? "3px solid #111" : "3px solid transparent",
-                      boxShadow: accent === color ? `0 0 0 2px ${color}44` : "none",
+                      border:
+                        accent === color
+                          ? "3px solid #111"
+                          : "3px solid transparent",
+                      boxShadow:
+                        accent === color ? `0 0 0 2px ${color}44` : "none",
                       transition: "all 0.2s",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
                     }}
                   >
-                    {accent === color && <CheckCircle size={14} color="white" weight="fill" />}
+                    {accent === color && (
+                      <CheckCircle size={14} color="white" weight="fill" />
+                    )}
                   </Box>
                 ))}
               </Stack>
@@ -662,9 +838,21 @@ const SettingsPage = () => {
             <Section title="Font Size">
               <Box sx={{ px: 2.5, py: 1.5 }}>
                 <Stack direction="row" justifyContent="space-between" mb={1}>
-                  <Typography variant="caption" sx={{ color: "#9ca3af" }}>A</Typography>
-                  <Typography variant="caption" sx={{ fontWeight: 700, color: "#5B96F7" }}>{fontSize}px</Typography>
-                  <Typography variant="body1" sx={{ color: "#9ca3af", fontWeight: 700 }}>A</Typography>
+                  <Typography variant="caption" sx={{ color: "#9ca3af" }}>
+                    A
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{ fontWeight: 700, color: "#5B96F7" }}
+                  >
+                    {fontSize}px
+                  </Typography>
+                  <Typography
+                    variant="body1"
+                    sx={{ color: "#9ca3af", fontWeight: 700 }}
+                  >
+                    A
+                  </Typography>
                 </Stack>
                 <Slider
                   value={fontSize}
@@ -678,7 +866,11 @@ const SettingsPage = () => {
             </Section>
 
             <Section title="Chat Wallpaper">
-              <Stack direction="row" spacing={1.5} sx={{ px: 2.5, py: 2, flexWrap: "wrap", gap: 1 }}>
+              <Stack
+                direction="row"
+                spacing={1.5}
+                sx={{ px: 2.5, py: 2, flexWrap: "wrap", gap: 1 }}
+              >
                 {wallpapers.map((wp) => (
                   <Tooltip key={wp.id} title={wp.label}>
                     <Box
@@ -689,14 +881,19 @@ const SettingsPage = () => {
                         borderRadius: "12px",
                         background: wp.bg,
                         cursor: "pointer",
-                        border: wallpaper === wp.id ? "3px solid #5B96F7" : "3px solid transparent",
+                        border:
+                          wallpaper === wp.id
+                            ? "3px solid #5B96F7"
+                            : "3px solid transparent",
                         transition: "border 0.2s",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
                       }}
                     >
-                      {wallpaper === wp.id && <CheckCircle size={18} color="#5B96F7" weight="fill" />}
+                      {wallpaper === wp.id && (
+                        <CheckCircle size={18} color="#5B96F7" weight="fill" />
+                      )}
                     </Box>
                   </Tooltip>
                 ))}
@@ -708,11 +905,59 @@ const SettingsPage = () => {
         {/* ── CHATS ── */}
         {activeSection === "chats" && (
           <Section title="Chat Settings">
-            <SettingRow icon={<ChatCircleText size={18} />} label="Enter Key Sends Message" sub="Press Enter to send, Shift+Enter for new line" action={<Switch defaultChecked size="small" sx={{ "& .MuiSwitch-switchBase.Mui-checked": { color: "#5B96F7" }, "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": { backgroundColor: "#5B96F7" } }} />} />
+            <SettingRow
+              icon={<ChatCircleText size={18} />}
+              label="Enter Key Sends Message"
+              sub="Press Enter to send, Shift+Enter for new line"
+              action={
+                <Switch
+                  defaultChecked
+                  size="small"
+                  sx={{
+                    "& .MuiSwitch-switchBase.Mui-checked": { color: "#5B96F7" },
+                    "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+                      backgroundColor: "#5B96F7",
+                    },
+                  }}
+                />
+              }
+            />
             <Divider sx={{ mx: 2 }} />
-            <SettingRow icon={<CheckCircle size={18} />} label="Message Timestamps" sub="Show time on every message" action={<Switch defaultChecked size="small" sx={{ "& .MuiSwitch-switchBase.Mui-checked": { color: "#5B96F7" }, "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": { backgroundColor: "#5B96F7" } }} />} />
+            <SettingRow
+              icon={<CheckCircle size={18} />}
+              label="Message Timestamps"
+              sub="Show time on every message"
+              action={
+                <Switch
+                  defaultChecked
+                  size="small"
+                  sx={{
+                    "& .MuiSwitch-switchBase.Mui-checked": { color: "#5B96F7" },
+                    "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+                      backgroundColor: "#5B96F7",
+                    },
+                  }}
+                />
+              }
+            />
             <Divider sx={{ mx: 2 }} />
-            <SettingRow icon={<Globe size={18} />} label="Auto-Download Media" sub="Download media when on Wi-Fi" action={<Switch defaultChecked size="small" sx={{ "& .MuiSwitch-switchBase.Mui-checked": { color: "#5B96F7" }, "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": { backgroundColor: "#5B96F7" } }} />} />
+            <SettingRow
+              icon={<Globe size={18} />}
+              label="Auto-Download Media"
+              sub="Download media when on Wi-Fi"
+              action={
+                <Switch
+                  defaultChecked
+                  size="small"
+                  sx={{
+                    "& .MuiSwitch-switchBase.Mui-checked": { color: "#5B96F7" },
+                    "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+                      backgroundColor: "#5B96F7",
+                    },
+                  }}
+                />
+              }
+            />
           </Section>
         )}
 
@@ -738,7 +983,10 @@ const SettingsPage = () => {
                   alignItems="center"
                   sx={{ px: 2.5, py: 1.2 }}
                 >
-                  <Typography variant="body2" sx={{ fontSize: "13px", color: "#374151" }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ fontSize: "13px", color: "#374151" }}
+                  >
                     {action}
                   </Typography>
                   <Chip

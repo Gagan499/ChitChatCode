@@ -21,7 +21,13 @@ import {
   ListItemSecondaryAction,
   Chip,
 } from "@mui/material";
-import { CircleDashed, Archive, ArrowLeft, UsersThree, X } from "@phosphor-icons/react";
+import {
+  CircleDashed,
+  Archive,
+  ArrowLeft,
+  UsersThree,
+  X,
+} from "@phosphor-icons/react";
 import ChatItem from "./ChatItem";
 import SearchBar from "./SearchBar";
 
@@ -32,7 +38,7 @@ const CreateGroupDialog = ({ open, onClose, contacts = [], onCreate }) => {
 
   const toggle = (id) =>
     setSelected((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
 
   const handleCreate = () => {
@@ -63,7 +69,11 @@ const CreateGroupDialog = ({ open, onClose, contacts = [], onCreate }) => {
       }}
     >
       <DialogTitle sx={{ pb: 0 }}>
-        <Stack direction="row" alignItems="center" justifyContent="space-between">
+        <Stack
+          direction="row"
+          alignItems="center"
+          justifyContent="space-between"
+        >
           <Stack direction="row" alignItems="center" spacing={1.5}>
             <Box
               sx={{
@@ -118,21 +128,39 @@ const CreateGroupDialog = ({ open, onClose, contacts = [], onCreate }) => {
                   key={id}
                   label={c?.name}
                   size="small"
-                  avatar={<Avatar src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${c?.name}`} />}
+                  avatar={
+                    <Avatar
+                      src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${c?.name}`}
+                    />
+                  }
                   onDelete={() => toggle(id)}
-                  sx={{ background: "#EAF2FE", color: "#3b7ef4", fontWeight: 600 }}
+                  sx={{
+                    background: "#EAF2FE",
+                    color: "#3b7ef4",
+                    fontWeight: 600,
+                  }}
                 />
               );
             })}
           </Box>
         )}
 
-        <Typography variant="caption" sx={{ color: "#9ca3af", display: "block", mb: 0.5 }}>
+        <Typography
+          variant="caption"
+          sx={{ color: "#9ca3af", display: "block", mb: 0.5 }}
+        >
           Select members (min 2)
         </Typography>
 
         {/* Contact list */}
-        <Box sx={{ maxHeight: 220, overflowY: "auto", border: "1px solid #f1f5f9", borderRadius: "12px" }}>
+        <Box
+          sx={{
+            maxHeight: 220,
+            overflowY: "auto",
+            border: "1px solid #f1f5f9",
+            borderRadius: "12px",
+          }}
+        >
           <List dense disablePadding>
             {contacts.map((contact, idx) => (
               <ListItemButton
@@ -141,7 +169,8 @@ const CreateGroupDialog = ({ open, onClose, contacts = [], onCreate }) => {
                 sx={{
                   borderRadius: "8px",
                   "&:hover": { background: "#f8faff" },
-                  borderBottom: idx < contacts.length - 1 ? "1px solid #f1f5f9" : "none",
+                  borderBottom:
+                    idx < contacts.length - 1 ? "1px solid #f1f5f9" : "none",
                 }}
               >
                 <ListItemAvatar sx={{ minWidth: 40 }}>
@@ -224,7 +253,11 @@ const ChatList = ({
   const otherChats = activeChats.filter((c) => !c.pinned);
 
   // Use only non-group chats as contacts for group creation
-  const contacts = nonGroupChats.map(({ id, name, online }) => ({ id, name, online }));
+  const contacts = nonGroupChats.map(({ id, name, online }) => ({
+    id,
+    name,
+    online,
+  }));
 
   const handleCreateGroup = (groupData) => {
     onCreateGroup?.(groupData);
@@ -252,7 +285,11 @@ const ChatList = ({
         {showArchived ? (
           <>
             <Stack direction="row" alignItems="center" spacing={1}>
-              <IconButton size="small" onClick={() => setShowArchived(false)} sx={{ color: "#5B96F7" }}>
+              <IconButton
+                size="small"
+                onClick={() => setShowArchived(false)}
+                sx={{ color: "#5B96F7" }}
+              >
                 <ArrowLeft size={20} weight="bold" />
               </IconButton>
               <Typography variant="h6" sx={{ fontWeight: 700 }}>
@@ -275,7 +312,8 @@ const ChatList = ({
                   size="small"
                   onClick={() => setGroupDialogOpen(true)}
                   sx={{
-                    background: "linear-gradient(135deg, #5B96F7 0%, #7c3aed 100%)",
+                    background:
+                      "linear-gradient(135deg, #5B96F7 0%, #7c3aed 100%)",
                     color: "white",
                     borderRadius: "10px",
                     p: "7px",
@@ -327,7 +365,10 @@ const ChatList = ({
             <Archive size={18} color="#d97706" weight="fill" />
           </Box>
           <Stack spacing={0}>
-            <Typography variant="body2" sx={{ fontWeight: 600, color: "#374151" }}>
+            <Typography
+              variant="body2"
+              sx={{ fontWeight: 600, color: "#374151" }}
+            >
               Archived Chats
             </Typography>
             {archivedChats.length > 0 && (
@@ -343,14 +384,19 @@ const ChatList = ({
 
       {/* ── Chat List ── */}
       <Box sx={{ flex: 1, overflowY: "auto", overflowX: "hidden" }}>
-
         {/* Archived View */}
         {showArchived && (
           <>
             {archivedChats.length === 0 ? (
-              <Stack alignItems="center" justifyContent="center" sx={{ height: 200, color: "#9ca3af" }}>
+              <Stack
+                alignItems="center"
+                justifyContent="center"
+                sx={{ height: 200, color: "#9ca3af" }}
+              >
                 <Archive size={40} />
-                <Typography variant="body2" sx={{ mt: 1 }}>No archived chats</Typography>
+                <Typography variant="body2" sx={{ mt: 1 }}>
+                  No archived chats
+                </Typography>
               </Stack>
             ) : (
               archivedChats.map((chat) => (
@@ -380,8 +426,14 @@ const ChatList = ({
                 <Typography
                   variant="caption"
                   sx={{
-                    px: 2, py: 1, display: "block", color: "#9ca3af",
-                    fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", fontSize: "10px",
+                    px: 2,
+                    py: 1,
+                    display: "block",
+                    color: "#9ca3af",
+                    fontWeight: 600,
+                    letterSpacing: "0.06em",
+                    textTransform: "uppercase",
+                    fontSize: "10px",
                   }}
                 >
                   Pinned
@@ -441,7 +493,11 @@ const ChatList = ({
             )}
 
             {activeChats.length === 0 && (
-              <Stack alignItems="center" justifyContent="center" sx={{ height: 200, color: "#9ca3af" }}>
+              <Stack
+                alignItems="center"
+                justifyContent="center"
+                sx={{ height: 200, color: "#9ca3af" }}
+              >
                 <Typography variant="body2">No chats yet</Typography>
               </Stack>
             )}

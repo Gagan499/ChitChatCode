@@ -1,5 +1,14 @@
 import React from "react";
-import { Box, Stack, Tooltip, Divider, Menu, MenuItem, ListItemIcon, Typography } from "@mui/material";
+import {
+  Box,
+  Stack,
+  Tooltip,
+  Divider,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  Typography,
+} from "@mui/material";
 import { useAuth } from "../../hooks/useAuth";
 import { useChat } from "../../hooks/useChat";
 import { STATUS_OPTIONS } from "../../context/ChatContext";
@@ -23,13 +32,11 @@ const Sidebar = () => {
   const [statusMenuAnchor, setStatusMenuAnchor] = React.useState(null);
 
   const avatarSrc =
-    user?.avatar ||
-    user?.profilePicture ||
-    user?.photoURL ||
-    undefined;  // no hard‑coded fallback — CustomAvatar shows initials instead
+    user?.avatar || user?.profilePicture || user?.photoURL || undefined; // no hard‑coded fallback — CustomAvatar shows initials instead
   const avatarAlt = user?.name || user?.username || "User";
 
-  const currentStatus = STATUS_OPTIONS.find((s) => s.value === userStatus) ?? STATUS_OPTIONS[0];
+  const currentStatus =
+    STATUS_OPTIONS.find((s) => s.value === userStatus) ?? STATUS_OPTIONS[0];
 
   const tabs = [
     { icon: <ChatBubbleOutlineIcon />, label: "Chats" },
@@ -52,7 +59,12 @@ const Sidebar = () => {
         flexShrink: 0,
       }}
     >
-      <Stack direction="column" alignItems="center" spacing={4} sx={{ width: "100%" }}>
+      <Stack
+        direction="column"
+        alignItems="center"
+        spacing={4}
+        sx={{ width: "100%" }}
+      >
         {/* Logo — click to refresh */}
         <Tooltip title="Refresh" placement="right">
           <Box
@@ -76,12 +88,23 @@ const Sidebar = () => {
               "&:active": { transform: "rotate(8deg) scale(0.95)" },
             }}
           >
-            <BoltIcon sx={{ color: "#EAB308", transform: "rotate(-8deg)", fontSize: 32 }} />
+            <BoltIcon
+              sx={{
+                color: "#EAB308",
+                transform: "rotate(-8deg)",
+                fontSize: 32,
+              }}
+            />
           </Box>
         </Tooltip>
 
         {/* Nav tabs */}
-        <Stack direction="column" alignItems="center" spacing={2} sx={{ width: "100%" }}>
+        <Stack
+          direction="column"
+          alignItems="center"
+          spacing={2}
+          sx={{ width: "100%" }}
+        >
           {tabs.map((tab, i) => (
             <Tooltip key={i} title={tab.label} placement="right">
               <span>
@@ -96,7 +119,12 @@ const Sidebar = () => {
 
           <Divider
             flexItem
-            sx={{ borderStyle: "dashed", borderColor: "#CBD5E1", borderWidth: 1, marginX: 2 }}
+            sx={{
+              borderStyle: "dashed",
+              borderColor: "#CBD5E1",
+              borderWidth: 1,
+              marginX: 2,
+            }}
           />
 
           <Tooltip title="Settings" placement="right">
@@ -136,7 +164,9 @@ const Sidebar = () => {
               "&:active": { transform: "scale(0.95)" },
             }}
           >
-            <LogoutOutlinedIcon sx={{ fontSize: 18, color: "#94a3b8", transition: "color 0.2s" }} />
+            <LogoutOutlinedIcon
+              sx={{ fontSize: 18, color: "#94a3b8", transition: "color 0.2s" }}
+            />
           </Box>
         </Tooltip>
 
@@ -212,7 +242,13 @@ const Sidebar = () => {
                   }}
                 />
               </ListItemIcon>
-              <Typography variant="body2" sx={{ fontWeight: userStatus === opt.value ? 700 : 500, fontSize: "13px" }}>
+              <Typography
+                variant="body2"
+                sx={{
+                  fontWeight: userStatus === opt.value ? 700 : 500,
+                  fontSize: "13px",
+                }}
+              >
                 {opt.label}
               </Typography>
             </MenuItem>

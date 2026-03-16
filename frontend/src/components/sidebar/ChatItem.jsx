@@ -75,7 +75,11 @@ const ChatItem = ({
           userSelect: "none",
         }}
       >
-        <Stack direction="row" alignItems="center" justifyContent="space-between">
+        <Stack
+          direction="row"
+          alignItems="center"
+          justifyContent="space-between"
+        >
           <Stack direction="row" spacing={2} alignItems="center">
             {dotColor ? (
               <Badge
@@ -83,10 +87,11 @@ const ChatItem = ({
                 anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
                 variant="dot"
                 sx={{
-                  '& .MuiBadge-badge': {
+                  "& .MuiBadge-badge": {
                     backgroundColor: dotColor,
                     color: dotColor,
-                    boxShadow: (theme) => `0 0 0 2px ${theme.palette.background.paper}`,
+                    boxShadow: (theme) =>
+                      `0 0 0 2px ${theme.palette.background.paper}`,
                   },
                 }}
               >
@@ -98,7 +103,10 @@ const ChatItem = ({
             ) : (
               <Avatar
                 src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`}
-                sx={{ filter: "grayscale(75%) opacity(0.7)", transition: "filter 0.2s" }}
+                sx={{
+                  filter: "grayscale(75%) opacity(0.7)",
+                  transition: "filter 0.2s",
+                }}
               />
             )}
 
@@ -108,7 +116,10 @@ const ChatItem = ({
               </Typography>
               <Typography
                 variant="caption"
-                sx={{ color: selected ? "rgba(255,255,255,0.75)" : "#6b7280", maxWidth: 140 }}
+                sx={{
+                  color: selected ? "rgba(255,255,255,0.75)" : "#6b7280",
+                  maxWidth: 140,
+                }}
                 noWrap
               >
                 {message}
@@ -119,7 +130,10 @@ const ChatItem = ({
           <Stack spacing={0.5} alignItems="center">
             <Typography
               variant="caption"
-              sx={{ color: selected ? "rgba(255,255,255,0.7)" : "#9ca3af", fontSize: "10px" }}
+              sx={{
+                color: selected ? "rgba(255,255,255,0.7)" : "#9ca3af",
+                fontSize: "10px",
+              }}
             >
               {time}
             </Typography>
@@ -165,7 +179,11 @@ const ChatItem = ({
       >
         <MenuItem onClick={handlePin} dense>
           <ListItemIcon>
-            <PushPin size={16} weight={pinned ? "fill" : "regular"} color="#5B96F7" />
+            <PushPin
+              size={16}
+              weight={pinned ? "fill" : "regular"}
+              color="#5B96F7"
+            />
           </ListItemIcon>
           <ListItemText
             primary={pinned ? "Unpin chat" : "Pin chat"}
