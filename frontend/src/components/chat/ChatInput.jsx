@@ -1,12 +1,14 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Box, Stack, IconButton, InputBase, Chip } from "@mui/material";
-import { Paperclip, PaperPlane, Smiley, X } from "@phosphor-icons/react";
+import { Paperclip, PaperPlane, Smiley, X, Code } from "@phosphor-icons/react";
 import EmojiPicker from "emoji-picker-react";
+import CodeEditor from "./CodeEditor";
 
 const ChatInput = ({ onSend, onTypingStart, onTypingStop }) => {
   const [message, setMessage] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [attachedFile, setAttachedFile] = useState(null);
+  const [showCodeEditor, setShowCodeEditor] = useState(false);
 
   const emojiPickerRef = useRef(null);
   const smileyBtnRef = useRef(null);
@@ -41,6 +43,11 @@ const ChatInput = ({ onSend, onTypingStart, onTypingStop }) => {
 
   const removeAttachment = () => setAttachedFile(null);
 
+  const handleSendCode = (codeSnippet) => {
+    if (onSend) onSend({ text: codeSnippet, file: null });
+    setShowCodeEditor(false);
+  };
+
   const handleSend = () => {
     const trimmed = message.trim();
     if (!trimmed && !attachedFile) return;
@@ -66,7 +73,14 @@ const ChatInput = ({ onSend, onTypingStart, onTypingStop }) => {
   const canSend = message.trim().length > 0 || !!attachedFile;
 
   return (
-    <Box sx={{ position: "relative", p: 2, background: "#F8FAFF", borderTop: "1px solid #e8edf5" }}>
+    <Box
+      sx={{
+        position: "relative",
+        p: 2,
+        background: "#F8FAFF",
+        borderTop: "1px solid #e8edf5",
+      }}
+    >
       {/* Emoji Picker Popup */}
       {showEmojiPicker && (
         <Box
@@ -90,6 +104,14 @@ const ChatInput = ({ onSend, onTypingStart, onTypingStop }) => {
             lazyLoadEmojis
           />
         </Box>
+      )}
+
+      {/* Code Editor */}
+      {showCodeEditor && (
+        <CodeEditor
+          onClose={() => setShowCodeEditor(false)}
+          onSendCode={handleSendCode}
+        />
       )}
 
       {/* Hidden file input — always in DOM, opened instantly via <label> */}
@@ -127,7 +149,13 @@ const ChatInput = ({ onSend, onTypingStart, onTypingStop }) => {
           direction="row"
           spacing={1}
           alignItems="center"
-          sx={{ flex: 1, background: "#EAF2FE", borderRadius: "12px", px: 1, py: 0.5 }}
+          sx={{
+            flex: 1,
+            background: "#EAF2FE",
+            borderRadius: "12px",
+            px: 1,
+            py: 0.5,
+          }}
         >
           {/*
            * Upload — uses a <label htmlFor> instead of JS .click() so the
@@ -146,11 +174,32 @@ const ChatInput = ({ onSend, onTypingStart, onTypingStop }) => {
               borderRadius: "8px",
               color: attachedFile ? "#5B96F7" : "#709CE6",
               transition: "color 0.2s, background 0.2s",
-              "&:hover": { background: "rgba(91,150,247,0.1)", color: "#5B96F7" },
+              "&:hover": {
+                background: "rgba(91,150,247,0.1)",
+                color: "#5B96F7",
+              },
             }}
           >
             <Paperclip size={20} weight={attachedFile ? "fill" : "regular"} />
           </Box>
+
+          <IconButton
+            size="small"
+            onClick={() => setShowCodeEditor((prev) => !prev)}
+            sx={{
+              width: 32,
+              height: 32,
+              borderRadius: "8px",
+              color: showCodeEditor ? "#5B96F7" : "#709CE6",
+              transition: "color 0.2s, background 0.2s",
+              "&:hover": {
+                background: "rgba(91,150,247,0.1)",
+                color: "#5B96F7",
+              },
+            }}
+          >
+            <Code size={20} weight={showCodeEditor ? "fill" : "regular"} />
+          </IconButton>
 
           <InputBase
             placeholder="Write a message…"
