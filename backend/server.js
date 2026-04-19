@@ -7,6 +7,7 @@ require("./models"); // load associations
 const authRoutes  = require("./routes/authRoutes");
 const userRoutes  = require("./routes/userRoutes");
 const roomRoutes  = require("./routes/roomRoutes");
+const codeRoutes  = require("./routes/codeRoutes");
 const setupSockets = require("./sockets/socketHandler");
 const keepliveRouter = require("./routes/AliveServer");
 
@@ -22,6 +23,7 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/rooms", roomRoutes);
+app.use("/api/code", codeRoutes);
 app.use("/api/keepalive", keepliveRouter);
 
 // 🔹 Test DB Connection First
