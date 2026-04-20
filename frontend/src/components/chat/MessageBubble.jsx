@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Box, Stack, Typography, IconButton, Tooltip } from "@mui/material";
-import { DownloadSimple, File, Play, CopySimple, Check } from "@phosphor-icons/react";
+import { DownloadSimple, File, Play, CopySimple, Check, CircleNotch } from "@phosphor-icons/react";
+import { executeCode } from "../../services/codeService";
 
 // ─── Utility: parse message into text + code-block segments ─────────────────
 function parseMessage(text) {
@@ -31,32 +32,20 @@ const CodeBlock = ({ lang, code, isSender }) => {
   const [running, setRunning] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const handleRun = () => {
+  const handleRun = async () => {
     setRunning(true);
     setOutput(null);
 
     try {
-      // Sandboxed execution via Function constructor — captures console.log output
-      const logs = [];
-      const sandboxConsole = {
-        log: (...args) => logs.push(args.map(String).join(" ")),
-        error: (...args) => logs.push("❌ " + args.map(String).join(" ")),
-        warn: (...args) => logs.push("⚠️ " + args.map(String).join(" ")),
-      };
+      const result = await executeCode(lang, code);
 
-      // eslint-disable-next-line no-new-func
-      const fn = new Function("console", code);
-      let returnVal;
-      try {
-        returnVal = fn(sandboxConsole);
-      } catch (err) {
-        logs.push("❌ Runtime error: " + err.message);
+      if (result.success) {
+        setOutput(result.output || "(no output)");
+      } else {
+        setOutput("❌ " + (result.error || result.output || "Execution failed."));
       }
-
-      if (returnVal !== undefined) logs.push("→ " + String(returnVal));
-      setOutput(logs.length > 0 ? logs.join("\n") : "(no output)");
     } catch (err) {
-      setOutput("❌ Syntax error: " + err.message);
+      setOutput("❌ " + err.message);
     } finally {
       setRunning(false);
     }
@@ -69,7 +58,10 @@ const CodeBlock = ({ lang, code, isSender }) => {
     });
   };
 
-  const isRunnable = ["js", "javascript", "ts", "typescript", ""].includes(lang.toLowerCase());
+  // All languages are now runnable via the exec server
+  // Only skip non-executable formats like json, css, sql, html
+  const nonRunnable = ["json", "css", "html", "markdown", "md"];
+  const isRunnable = !nonRunnable.includes(lang.toLowerCase());
 
   return (
     <Box
@@ -115,15 +107,17 @@ const CodeBlock = ({ lang, code, isSender }) => {
             </IconButton>
           </Tooltip>
 
-          {/* Run Button — only for JS/TS */}
+          {/* Run Button — for all executable languages */}
           {isRunnable && (
-            <Tooltip title="Run code">
+            <Tooltip title={running ? "Running…" : "Run code"}>
               <IconButton
                 size="small"
                 onClick={handleRun}
                 disabled={running}
                 sx={{
-                  background: "linear-gradient(135deg, #5B96F7 0%, #7c3aed 100%)",
+                  background: running
+                    ? "rgba(255,255,255,0.1)"
+                    : "linear-gradient(135deg, #5B96F7 0%, #7c3aed 100%)",
                   color: "#fff",
                   borderRadius: "6px",
                   px: 1,
@@ -132,11 +126,17 @@ const CodeBlock = ({ lang, code, isSender }) => {
                   fontWeight: 700,
                   gap: "3px",
                   "&:hover": { opacity: 0.88 },
-                  "&.Mui-disabled": { opacity: 0.4, color: "#fff" },
+                  "&.Mui-disabled": { opacity: 0.6, color: "#fff" },
                 }}
               >
-                <Play size={12} weight="fill" />
-                <span style={{ fontSize: "11px", fontFamily: "sans-serif" }}>Run</span>
+                {running ? (
+                  <CircleNotch size={12} weight="bold" style={{ animation: "spin 1s linear infinite" }} />
+                ) : (
+                  <Play size={12} weight="fill" />
+                )}
+                <span style={{ fontSize: "11px", fontFamily: "sans-serif" }}>
+                  {running ? "Running" : "Run"}
+                </span>
               </IconButton>
             </Tooltip>
           )}
@@ -179,7 +179,7 @@ const CodeBlock = ({ lang, code, isSender }) => {
               m: 0,
               fontFamily: "'Fira Code', monospace",
               fontSize: "12px",
-              color: "#4ade80",
+              color: output.startsWith("❌") ? "#f87171" : "#4ade80",
               whiteSpace: "pre-wrap",
               wordBreak: "break-all",
             }}
@@ -188,6 +188,14 @@ const CodeBlock = ({ lang, code, isSender }) => {
           </Box>
         </Box>
       )}
+
+      {/* Spinner keyframes */}
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </Box>
   );
 };

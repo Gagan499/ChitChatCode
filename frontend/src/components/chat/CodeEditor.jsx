@@ -6,7 +6,9 @@ import {
   PaperPlane,
   CaretUp,
   CaretDown,
+  CircleNotch,
 } from "@phosphor-icons/react";
+import { executeCode } from "../../services/codeService";
 
 const CodeEditor = ({ onClose, onSendCode }) => {
   const [language, setLanguage] = useState("javascript");
@@ -14,6 +16,7 @@ const CodeEditor = ({ onClose, onSendCode }) => {
   const [output, setOutput] = useState("");
   const [isExpanded, setIsExpanded] = useState(true);
   const [showPreview, setShowPreview] = useState(false);
+  const [isRunning, setIsRunning] = useState(false);
   const textareaRef = useRef(null);
 
   const languages = [
@@ -44,27 +47,30 @@ const CodeEditor = ({ onClose, onSendCode }) => {
     }
   };
 
-  const runCode = () => {
-    if (language === "javascript") {
-      try {
-        let logs = [];
-        const customConsole = {
-          log: (...args) => logs.push(args.join(" ")),
-          error: (...args) => logs.push("Error: " + args.join(" ")),
-          warn: (...args) => logs.push("Warning: " + args.join(" ")),
-        };
-
-        const func = new Function("console", code);
-        func(customConsole);
-        setOutput(logs.join("\n") || "Code executed successfully (no output)");
-        setShowPreview(false);
-      } catch (error) {
-        setOutput("Error: " + error.message);
-        setShowPreview(false);
-      }
-    } else if (language === "html") {
+  const runCode = async () => {
+    // HTML gets instant local preview — no server round-trip needed
+    if (language === "html") {
       setShowPreview(true);
       setOutput("");
+      return;
+    }
+
+    setIsRunning(true);
+    setOutput("");
+    setShowPreview(false);
+
+    try {
+      const result = await executeCode(language, code);
+
+      if (result.success) {
+        setOutput(result.output || "Code executed successfully (no output)");
+      } else {
+        setOutput(result.error || result.output || "Execution failed.");
+      }
+    } catch (err) {
+      setOutput("Error: " + err.message);
+    } finally {
+      setIsRunning(false);
     }
   };
 
@@ -191,26 +197,30 @@ const CodeEditor = ({ onClose, onSendCode }) => {
             />
           </div>
 
-          {(language === "javascript" || language === "html") && (
-            <button
-              onClick={runCode}
-              style={{
-                backgroundColor: "#4CAF50",
-                color: "#ffffff",
-                border: "none",
-                borderRadius: "4px",
-                padding: "8px 16px",
-                cursor: "pointer",
-                marginRight: "8px",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "4px",
-              }}
-            >
+          <button
+            onClick={runCode}
+            disabled={isRunning || !code.trim()}
+            style={{
+              backgroundColor: isRunning ? "#666" : "#4CAF50",
+              color: "#ffffff",
+              border: "none",
+              borderRadius: "4px",
+              padding: "8px 16px",
+              cursor: isRunning ? "not-allowed" : "pointer",
+              marginRight: "8px",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "4px",
+              opacity: !code.trim() ? 0.5 : 1,
+            }}
+          >
+            {isRunning ? (
+              <CircleNotch size={16} className="spin" />
+            ) : (
               <Play size={16} />
-              Run
-            </button>
-          )}
+            )}
+            {isRunning ? "Running…" : "Run"}
+          </button>
 
           <button
             onClick={sendCode}
@@ -266,6 +276,17 @@ const CodeEditor = ({ onClose, onSendCode }) => {
           )}
         </>
       )}
+
+      {/* Spinner animation */}
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        .spin {
+          animation: spin 1s linear infinite;
+        }
+      `}</style>
     </div>
   );
 };
