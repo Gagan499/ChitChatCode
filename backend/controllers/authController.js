@@ -1,6 +1,30 @@
 const bcrypt = require("bcryptjs");
 const User = require("../models/User");
+const UserSession = require("../models/UserSession");
 const { generateToken } = require("../services/autheService");
+
+// ─── Helper: parse device name from user-agent ────────────────────────────
+function parseDeviceName(userAgent = "") {
+  if (!userAgent) return "Unknown Device";
+  if (/mobile/i.test(userAgent)) return "Mobile Browser";
+  if (/tablet|ipad/i.test(userAgent)) return "Tablet";
+  if (/windows/i.test(userAgent)) return "Windows PC";
+  if (/macintosh|mac os/i.test(userAgent)) return "Mac";
+  if (/linux/i.test(userAgent)) return "Linux PC";
+  return "Browser";
+}
+
+// ─── Helper: safe public user object ─────────────────────────────────────
+function safeUser(user) {
+  return {
+    id: user.id,
+    username: user.username,
+    email: user.email,
+    about: user.about,
+    language: user.language,
+    two_factor_enabled: user.two_factor_enabled,
+  };
+}
 
 // @desc    Register a new user
 // @route   POST /api/auth/register
@@ -9,30 +33,23 @@ const registerUser = async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
-    // Validate input
     if (!username || !email || !password) {
       return res.status(400).json({ message: "Please provide all fields" });
     }
 
-    // Check if user exists
     const userExists = await User.findOne({ where: { email } });
     if (userExists) {
-      return res
-        .status(400)
-        .json({ message: "User already exists with this email" });
+      return res.status(400).json({ message: "User already exists with this email" });
     }
 
-    // Check username uniqueness
     const usernameExists = await User.findOne({ where: { username } });
     if (usernameExists) {
       return res.status(400).json({ message: "Username is already taken" });
     }
 
-    // Hash password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Create user
     const user = await User.create({
       username,
       email,
@@ -42,11 +59,7 @@ const registerUser = async (req, res) => {
     if (user) {
       res.status(201).json({
         success: true,
-        user: {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-        },
+        user: safeUser(user),
         token: generateToken(user.id),
       });
     } else {
@@ -65,24 +78,39 @@ const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Validate input
     if (!email || !password) {
-      return res
-        .status(400)
-        .json({ message: "Please provide email and password" });
+      return res.status(400).json({ message: "Please provide email and password" });
     }
 
-    // Find user by email
     const user = await User.findOne({ where: { email } });
 
     if (user && (await bcrypt.compare(password, user.password_hash))) {
+      // ── Record device session ─────────────────────────────────────────
+      const userAgent = req.headers["user-agent"] || "";
+      const ipAddress =
+        req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
+        req.socket?.remoteAddress ||
+        "Unknown";
+
+      // Mark all existing sessions for this user as not current
+      await UserSession.update(
+        { is_current: false },
+        { where: { user_id: user.id } }
+      );
+
+      // Create new session
+      await UserSession.create({
+        user_id: user.id,
+        device_name: parseDeviceName(userAgent),
+        ip_address: ipAddress,
+        user_agent: userAgent,
+        last_active: new Date(),
+        is_current: true,
+      });
+
       res.json({
         success: true,
-        user: {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-        },
+        user: safeUser(user),
         token: generateToken(user.id),
       });
     } else {
@@ -107,7 +135,7 @@ const getMe = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    return res.json(user);
+    return res.json(safeUser(user));
   } catch (error) {
     console.error("Error in getMe:", error);
     res.status(500).json({ message: "Server error", error: error.message });
@@ -118,19 +146,18 @@ const logout = (req, res) => {
   res.status(200).json({ message: "Logged out successfully" });
 };
 
-// @desc    Update user profile
+// @desc    Update user profile (username + about)
 // @route   PUT /api/auth/me
 // @access  Private
 const updateMe = async (req, res) => {
   try {
-    const { username } = req.body;
+    const username = req.body.username || req.body.name;
+    const { about } = req.body;
 
-    // Validate input
     if (!username) {
-      return res.status(400).json({ message: "Please provide username" });
+      return res.status(400).json({ message: "Please provide a display name" });
     }
 
-    // Check username uniqueness (excluding current user)
     const usernameExists = await User.findOne({
       where: { username, id: { [require("sequelize").Op.ne]: req.user.id } },
     });
@@ -138,17 +165,16 @@ const updateMe = async (req, res) => {
       return res.status(400).json({ message: "Username is already taken" });
     }
 
-    // Update user
-    await User.update({ username }, { where: { id: req.user.id } });
+    const updatePayload = { username };
+    if (about !== undefined) updatePayload.about = about;
 
-    // Fetch updated user
-    const updatedUser = await User.findByPk(req.user.id);
+    await User.update(updatePayload, { where: { id: req.user.id } });
 
-    res.json({
-      id: updatedUser.id,
-      username: updatedUser.username,
-      email: updatedUser.email,
+    const updatedUser = await User.findByPk(req.user.id, {
+      attributes: { exclude: ["password_hash"] },
     });
+
+    res.json(safeUser(updatedUser));
   } catch (error) {
     console.error("Error in updateMe:", error);
     res.status(500).json({ message: "Server error", error: error.message });
