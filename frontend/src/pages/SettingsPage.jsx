@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Box,
   Stack,
@@ -20,6 +20,8 @@ import {
   Select,
   MenuItem,
   FormControl,
+  CircularProgress,
+  Alert,
 } from "@mui/material";
 import {
   User,
@@ -37,10 +39,18 @@ import {
   Keyboard,
   ChatCircleText,
   Globe,
+  Trash,
 } from "@phosphor-icons/react";
 import { useAuth } from "../hooks/useAuth";
 import { useChat } from "../hooks/useChat";
-import { updateProfile } from "../services/api";
+import { useNotifications } from "../hooks/useNotifications";
+import {
+  updateUserProfile,
+  updateLanguage,
+  toggle2FA,
+  getDevices,
+  deleteDevice,
+} from "../services/api";
 
 /* ─── Shared section wrapper ─────────────────────────────────────────────── */
 const Section = ({ title, children }) => (
@@ -140,194 +150,175 @@ const ACCENTS = [
 
 /* ─── Settings Page ──────────────────────────────────────────────────────── */
 const SettingsPage = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const { userStatus, setUserStatus } = useChat();
+  const {
+    settings: notifSettings,
+    updateSetting: updateNotifSetting,
+    requestDesktopPermission,
+  } = useNotifications();
 
   const [activeSection, setActiveSection] = useState("profile");
 
-  // Appearance
+  // ── Feedback state ────────────────────────────────────────────────────────
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [saveError, setSaveError]     = useState("");
+
+  const showFeedback = (type, msg = "") => {
+    if (type === "success") { setSaveSuccess(true); setSaveError(""); }
+    else                    { setSaveError(msg);    setSaveSuccess(false); }
+    setTimeout(() => { setSaveSuccess(false); setSaveError(""); }, 3500);
+  };
+
+  // ── Appearance (localStorage only — cosmetic) ─────────────────────────────
   const [darkMode, setDarkMode] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem("chitchat:darkMode") || "false");
-    } catch {
-      return false;
-    }
+    try { return JSON.parse(localStorage.getItem("chitchat:darkMode") || "false"); }
+    catch { return false; }
   });
   const [fontSize, setFontSize] = useState(() => {
-    try {
-      return parseInt(localStorage.getItem("chitchat:fontSize") || "14");
-    } catch {
-      return 14;
-    }
+    try { return parseInt(localStorage.getItem("chitchat:fontSize") || "14"); }
+    catch { return 14; }
   });
   const [accent, setAccent] = useState(() => {
-    try {
-      return localStorage.getItem("chitchat:accent") || "#5B96F7";
-    } catch {
-      return "#5B96F7";
-    }
+    try { return localStorage.getItem("chitchat:accent") || "#5B96F7"; }
+    catch { return "#5B96F7"; }
   });
   const [wallpaper, setWallpaper] = useState(() => {
-    try {
-      return localStorage.getItem("chitchat:wallpaper") || "default";
-    } catch {
-      return "default";
-    }
+    try { return localStorage.getItem("chitchat:wallpaper") || "default"; }
+    catch { return "default"; }
   });
 
-  // Notifications
-  const [notifMessages, setNotifMessages] = useState(() => {
-    try {
-      return JSON.parse(
-        localStorage.getItem("chitchat:notifMessages") || "true",
-      );
-    } catch {
-      return true;
-    }
-  });
-  const [notifSounds, setNotifSounds] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem("chitchat:notifSounds") || "true");
-    } catch {
-      return true;
-    }
-  });
-  const [notifPreviews, setNotifPreviews] = useState(() => {
-    try {
-      return JSON.parse(
-        localStorage.getItem("chitchat:notifPreviews") || "true",
-      );
-    } catch {
-      return true;
-    }
-  });
-  const [notifDesktop, setNotifDesktop] = useState(() => {
-    try {
-      return JSON.parse(
-        localStorage.getItem("chitchat:notifDesktop") || "false",
-      );
-    } catch {
-      return false;
-    }
-  });
+  useEffect(() => { try { localStorage.setItem("chitchat:darkMode", JSON.stringify(darkMode)); } catch {} }, [darkMode]);
+  useEffect(() => { try { localStorage.setItem("chitchat:fontSize", fontSize.toString()); }       catch {} }, [fontSize]);
+  useEffect(() => { try { localStorage.setItem("chitchat:accent", accent); }                      catch {} }, [accent]);
+  useEffect(() => { try { localStorage.setItem("chitchat:wallpaper", wallpaper); }                catch {} }, [wallpaper]);
 
-  // Privacy
+  // ── Privacy (localStorage only — no backend model yet) ───────────────────
   const [lastSeen, setLastSeen] = useState(() => {
-    try {
-      return localStorage.getItem("chitchat:lastSeen") || "everyone";
-    } catch {
-      return "everyone";
-    }
+    try { return localStorage.getItem("chitchat:lastSeen") || "everyone"; }
+    catch { return "everyone"; }
   });
   const [readReceipts, setReadReceipts] = useState(() => {
-    try {
-      return JSON.parse(
-        localStorage.getItem("chitchat:readReceipts") || "true",
-      );
-    } catch {
-      return true;
-    }
+    try { return JSON.parse(localStorage.getItem("chitchat:readReceipts") || "true"); }
+    catch { return true; }
   });
 
-  // Profile edit
-  const [editName, setEditName] = useState(
-    user?.name || user?.username || "User",
-  );
-  const [editAbout, setEditAbout] = useState(
-    "Hey there! I am using ChitChatCode 💬",
-  );
+  useEffect(() => { try { localStorage.setItem("chitchat:lastSeen", lastSeen); }                      catch {} }, [lastSeen]);
+  useEffect(() => { try { localStorage.setItem("chitchat:readReceipts", JSON.stringify(readReceipts)); } catch {} }, [readReceipts]);
+
+  // ── Profile edit ──────────────────────────────────────────────────────────
+  const [editName,  setEditName]  = useState(user?.username || user?.name || "User");
+  const [editAbout, setEditAbout] = useState(user?.about || "Hey there! I am using ChitChatCode 💬");
   const [saving, setSaving] = useState(false);
 
-  // Persist settings
-  useEffect(() => {
-    try {
-      localStorage.setItem("chitchat:darkMode", JSON.stringify(darkMode));
-    } catch {}
-  }, [darkMode]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem("chitchat:fontSize", fontSize.toString());
-    } catch {}
-  }, [fontSize]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem("chitchat:accent", accent);
-    } catch {}
-  }, [accent]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem("chitchat:wallpaper", wallpaper);
-    } catch {}
-  }, [wallpaper]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(
-        "chitchat:notifMessages",
-        JSON.stringify(notifMessages),
-      );
-    } catch {}
-  }, [notifMessages]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem("chitchat:notifSounds", JSON.stringify(notifSounds));
-    } catch {}
-  }, [notifSounds]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(
-        "chitchat:notifPreviews",
-        JSON.stringify(notifPreviews),
-      );
-    } catch {}
-  }, [notifPreviews]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(
-        "chitchat:notifDesktop",
-        JSON.stringify(notifDesktop),
-      );
-    } catch {}
-  }, [notifDesktop]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem("chitchat:lastSeen", lastSeen);
-    } catch {}
-  }, [lastSeen]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(
-        "chitchat:readReceipts",
-        JSON.stringify(readReceipts),
-      );
-    } catch {}
-  }, [readReceipts]);
-
-  // Handle profile save
   const handleSaveProfile = async () => {
+    if (!editName.trim()) { showFeedback("error", "Display name cannot be empty"); return; }
     setSaving(true);
     try {
-      await updateProfile({ name: editName, about: editAbout });
-      // Optionally update user context or show success
+      const { data } = await updateUserProfile({ username: editName.trim(), about: editAbout });
+      updateUser({ username: data.username, about: data.about });
+      showFeedback("success");
     } catch (err) {
-      console.warn("Failed to save profile", err);
+      const msg = err?.response?.data?.message || "Failed to save profile";
+      showFeedback("error", msg);
     } finally {
       setSaving(false);
+    }
+  };
+
+  // ── Notification toggles — backed by NotificationContext ─────────────────
+  const notifMessages = notifSettings?.message_notifications ?? true;
+  const notifSounds   = notifSettings?.sound    ?? true;
+  const notifPreviews = notifSettings?.previews  ?? true;
+  const notifDesktop  = notifSettings?.desktop   ?? false;
+
+  const handleToggleNotif = useCallback(async (key, currentValue) => {
+    await updateNotifSetting(key, !currentValue);
+  }, [updateNotifSetting]);
+
+  const handleToggleDesktop = useCallback(async () => {
+    if (!notifDesktop) {
+      // Turning ON — ask for permission first
+      const granted = await requestDesktopPermission();
+      if (!granted) {
+        showFeedback("error", "Desktop notifications blocked. Allow them in browser settings.");
+        return;
+      }
+    }
+    await updateNotifSetting("desktop", !notifDesktop);
+  }, [notifDesktop, updateNotifSetting, requestDesktopPermission]);
+
+  // ── Account: Language ─────────────────────────────────────────────────────
+  const [language, setLanguage] = useState(user?.language || "en");
+  const [savingLang, setSavingLang] = useState(false);
+
+  const handleSaveLanguage = async (lang) => {
+    setLanguage(lang);
+    setSavingLang(true);
+    try {
+      await updateLanguage({ language: lang });
+      updateUser({ language: lang });
+    } catch (err) {
+      console.warn("Failed to save language", err);
+    } finally {
+      setSavingLang(false);
+    }
+  };
+
+  // ── Account: 2FA ──────────────────────────────────────────────────────────
+  const [twoFA, setTwoFA] = useState(user?.two_factor_enabled ?? false);
+  const [toggling2FA, setToggling2FA] = useState(false);
+
+  const handleToggle2FA = async () => {
+    setToggling2FA(true);
+    try {
+      const { data } = await toggle2FA();
+      setTwoFA(data.two_factor_enabled);
+      updateUser({ two_factor_enabled: data.two_factor_enabled });
+    } catch (err) {
+      console.warn("Failed to toggle 2FA", err);
+    } finally {
+      setToggling2FA(false);
+    }
+  };
+
+  // ── Linked Devices ────────────────────────────────────────────────────────
+  const [devices, setDevices]             = useState([]);
+  const [devicesLoading, setDevicesLoading] = useState(false);
+  const [deletingId, setDeletingId]       = useState(null);
+
+  const loadDevices = useCallback(async () => {
+    setDevicesLoading(true);
+    try {
+      const { data } = await getDevices();
+      setDevices(data);
+    } catch (err) {
+      console.warn("Failed to load devices", err);
+    } finally {
+      setDevicesLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeSection === "profile") loadDevices();
+  }, [activeSection, loadDevices]);
+
+  const handleDeleteDevice = async (id) => {
+    setDeletingId(id);
+    try {
+      await deleteDevice(id);
+      setDevices((prev) => prev.filter((d) => d.id !== id));
+    } catch (err) {
+      console.warn("Failed to delete device", err);
+    } finally {
+      setDeletingId(null);
     }
   };
 
   const avatarSrc =
     user?.avatar ||
     user?.profilePicture ||
-    `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.name || "user"}`;
+    `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.username || user?.name || "user"}`;
 
   const navItems = [
     { id: "profile", icon: <User size={18} />, label: "Profile" },
@@ -482,7 +473,7 @@ const SettingsPage = () => {
                   </Tooltip>
                 </Box>
                 <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                  {user?.name || user?.username || "User"}
+                  {user?.username || user?.name || "User"}
                 </Typography>
                 <Typography variant="caption" sx={{ color: "#9ca3af" }}>
                   {user?.email || "No email"}
@@ -492,6 +483,17 @@ const SettingsPage = () => {
               <Divider />
 
               <Stack spacing={2} sx={{ p: 2.5 }}>
+                {/* Feedback alerts */}
+                {saveSuccess && (
+                  <Alert severity="success" sx={{ borderRadius: "10px", fontSize: "12px" }}>
+                    Profile saved successfully!
+                  </Alert>
+                )}
+                {saveError && (
+                  <Alert severity="error" sx={{ borderRadius: "10px", fontSize: "12px" }}>
+                    {saveError}
+                  </Alert>
+                )}
                 <TextField
                   label="Display Name"
                   value={editName}
@@ -543,26 +545,97 @@ const SettingsPage = () => {
               </Stack>
             </Section>
 
+            {/* ── Linked Devices ── */}
+            <Section title="Linked Devices">
+              {devicesLoading ? (
+                <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
+                  <CircularProgress size={20} sx={{ color: "#5B96F7" }} />
+                </Box>
+              ) : devices.length === 0 ? (
+                <Typography variant="caption" sx={{ px: 2.5, py: 1.5, display: "block", color: "#9ca3af" }}>
+                  No sessions recorded yet. Sessions are created on login.
+                </Typography>
+              ) : (
+                devices.map((device, i) => (
+                  <React.Fragment key={device.id}>
+                    <SettingRow
+                      icon={<DeviceMobile size={18} />}
+                      label={
+                        <Stack direction="row" alignItems="center" gap={1}>
+                          {device.device_name}
+                          {device.is_current && (
+                            <Chip label="This device" size="small" sx={{ background: "#d1fae5", color: "#065f46", fontWeight: 700, fontSize: "10px" }} />
+                          )}
+                        </Stack>
+                      }
+                      sub={`IP: ${device.ip_address || "Unknown"} · Last active: ${new Date(device.last_active).toLocaleDateString()}`}
+                      action={
+                        !device.is_current && (
+                          <Tooltip title="Remove session">
+                            <IconButton
+                              size="small"
+                              disabled={deletingId === device.id}
+                              onClick={() => handleDeleteDevice(device.id)}
+                              sx={{ color: "#ef4444" }}
+                            >
+                              {deletingId === device.id ? <CircularProgress size={14} /> : <Trash size={16} />}
+                            </IconButton>
+                          </Tooltip>
+                        )
+                      }
+                    />
+                    {i < devices.length - 1 && <Divider sx={{ mx: 2 }} />}
+                  </React.Fragment>
+                ))
+              )}
+            </Section>
+
             <Section title="Account">
-              <SettingRow
-                icon={<DeviceMobile size={18} />}
-                label="Linked Devices"
-                sub="Manage your devices"
-                onClick={() => {}}
-              />
+              {/* Language */}
+              <Box sx={{ px: 2.5, py: 1.5 }}>
+                <Stack direction="row" alignItems="center" gap={1} mb={0.8}>
+                  <Globe size={18} color="#5B96F7" />
+                  <Typography variant="body2" sx={{ fontWeight: 600, fontSize: "13px" }}>
+                    Language
+                  </Typography>
+                  {savingLang && <CircularProgress size={12} sx={{ color: "#5B96F7" }} />}
+                </Stack>
+                <FormControl size="small" fullWidth>
+                  <Select
+                    value={language}
+                    onChange={(e) => handleSaveLanguage(e.target.value)}
+                    sx={{ borderRadius: "10px", fontSize: "13px" }}
+                  >
+                    <MenuItem value="en">English (US)</MenuItem>
+                    <MenuItem value="es">Spanish</MenuItem>
+                    <MenuItem value="fr">French</MenuItem>
+                    <MenuItem value="de">German</MenuItem>
+                    <MenuItem value="hi">Hindi</MenuItem>
+                    <MenuItem value="zh">Chinese</MenuItem>
+                    <MenuItem value="ar">Arabic</MenuItem>
+                    <MenuItem value="pt">Portuguese</MenuItem>
+                    <MenuItem value="ja">Japanese</MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
               <Divider sx={{ mx: 2 }} />
-              <SettingRow
-                icon={<Globe size={18} />}
-                label="Language"
-                sub="English (US)"
-                onClick={() => {}}
-              />
-              <Divider sx={{ mx: 2 }} />
+              {/* Two-Step Verification */}
               <SettingRow
                 icon={<ShieldCheck size={18} />}
                 label="Two-Step Verification"
-                sub="Add extra security"
-                onClick={() => {}}
+                sub={twoFA ? "Enabled — extra security is active" : "Add extra security to your account"}
+                action={
+                  <Switch
+                    checked={twoFA}
+                    onChange={handleToggle2FA}
+                    disabled={toggling2FA}
+                    size="small"
+                    sx={{
+                      "& .MuiSwitch-switchBase.Mui-checked": { color: "#5B96F7" },
+                      "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": { backgroundColor: "#5B96F7" },
+                    }}
+                  />
+                }
               />
             </Section>
           </>
@@ -578,7 +651,7 @@ const SettingsPage = () => {
               action={
                 <Switch
                   checked={notifMessages}
-                  onChange={() => setNotifMessages(!notifMessages)}
+                  onChange={() => handleToggleNotif("message_notifications", notifMessages)}
                   size="small"
                   sx={{
                     "& .MuiSwitch-switchBase.Mui-checked": { color: "#5B96F7" },
@@ -597,7 +670,7 @@ const SettingsPage = () => {
               action={
                 <Switch
                   checked={notifSounds}
-                  onChange={() => setNotifSounds(!notifSounds)}
+                  onChange={() => handleToggleNotif("sound", notifSounds)}
                   size="small"
                   sx={{
                     "& .MuiSwitch-switchBase.Mui-checked": { color: "#5B96F7" },
@@ -616,7 +689,7 @@ const SettingsPage = () => {
               action={
                 <Switch
                   checked={notifPreviews}
-                  onChange={() => setNotifPreviews(!notifPreviews)}
+                  onChange={() => handleToggleNotif("previews", notifPreviews)}
                   size="small"
                   sx={{
                     "& .MuiSwitch-switchBase.Mui-checked": { color: "#5B96F7" },
@@ -635,7 +708,7 @@ const SettingsPage = () => {
               action={
                 <Switch
                   checked={notifDesktop}
-                  onChange={() => setNotifDesktop(!notifDesktop)}
+                  onChange={handleToggleDesktop}
                   size="small"
                   sx={{
                     "& .MuiSwitch-switchBase.Mui-checked": { color: "#5B96F7" },
