@@ -10,21 +10,36 @@ const API = axios.create({
 // Attach token automatically
 API.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
-
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
-
   return config;
 });
 
-export const loginUser = (data) => API.post("/auth/login", data);
-export const registerUser = (data) => API.post("/auth/register", data);
-export const LogoutUser = () => API.delete("/auth/logout");
-export const getProfile = () => API.get("/auth/me");
-export const updateProfile = (data) => API.put("/auth/me", data);
-export const getUsers = () => API.get("/users");
-export const getDirectRoom = (otherUserId) =>
-  API.get(`/rooms/direct/${otherUserId}`);
+// ── Auth ──────────────────────────────────────────────────────────────────
+export const loginUser       = (data) => API.post("/auth/login", data);
+export const registerUser    = (data) => API.post("/auth/register", data);
+export const LogoutUser      = ()     => API.post("/auth/logout");
+export const getProfile      = ()     => API.get("/auth/me");
+export const updateProfile   = (data) => API.put("/auth/me", data);
+
+// ── Users / contacts ──────────────────────────────────────────────────────
+export const getUsers        = ()     => API.get("/users");
+export const getDirectRoom   = (id)   => API.get(`/rooms/direct/${id}`);
+
+// ── Profile (new dedicated route) ────────────────────────────────────────
+export const updateUserProfile = (data) => API.put("/users/update-profile", data);
+
+// ── Account settings ──────────────────────────────────────────────────────
+export const updateLanguage  = (data) => API.put("/users/language", data);
+export const toggle2FA       = ()     => API.put("/users/toggle-2fa");
+
+// ── Notification settings ─────────────────────────────────────────────────
+export const getNotifSettings    = ()     => API.get("/users/notifications");
+export const updateNotifSettings = (data) => API.put("/users/notifications", data);
+
+// ── Linked devices ────────────────────────────────────────────────────────
+export const getDevices      = ()     => API.get("/users/devices");
+export const deleteDevice    = (id)   => API.delete(`/users/devices/${id}`);
 
 export default API;
