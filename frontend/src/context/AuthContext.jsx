@@ -64,6 +64,17 @@ export const AuthProvider = ({ children }) => {
     setToken(null);
   };
 
+  // 🔄 Update user in context + localStorage after profile changes
+  const updateUser = (updatedFields) => {
+    setUser((prev) => {
+      const merged = { ...prev, ...updatedFields };
+      try {
+        localStorage.setItem("user", JSON.stringify(merged));
+      } catch (_) {}
+      return merged;
+    });
+  };
+
   const value = {
     user,
     token,
@@ -71,6 +82,7 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated: !!token && !!user,
     login,
     logout,
+    updateUser,
   };
 
   return (

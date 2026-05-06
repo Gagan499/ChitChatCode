@@ -7,6 +7,7 @@ import React, {
   useContext,
 } from "react";
 import { AuthContext } from "./AuthContext";
+import { NotificationContext } from "./NotificationContext";
 import { getUsers } from "../services/api";
 import {
   connectSocket,
@@ -28,6 +29,7 @@ export const ChatContext = createContext(null);
 
 export const ChatProvider = ({ children }) => {
   const { user, token } = useContext(AuthContext);
+  const notif = useContext(NotificationContext);
 
   /* ── State ── */
   const [chats, setChats] = useState([]);
@@ -162,10 +164,37 @@ export const ChatProvider = ({ children }) => {
     // Notify server of our current status as soon as we connect
     setPresenceStatus(userStatus);
 
+    // ── Global new-message listener for notifications ─────────────────────
+    // This fires for ALL rooms, regardless of which chat is open.
+    const offGlobalMessage = onSocketEvent("message:new", (msg) => {
+      // Don't notify for messages sent by ourselves
+      if (msg.sender?.id === user?.id) return;
+
+      const notifCtx = notif;
+      if (!notifCtx) return;
+
+      const { settings, playSound, showDesktopNotification } = notifCtx;
+
+      // Sound notification
+      if (settings?.sound) {
+        playSound();
+      }
+
+      // Desktop notification
+      if (settings?.desktop) {
+        const senderName = msg.sender?.username || "Someone";
+        const body = settings?.previews
+          ? (msg.content || "New message")
+          : "You have a new message";
+        showDesktopNotification(`${senderName} sent a message`, body);
+      }
+    });
+
     // cleanup on logout / token change
     return () => {
       offPresenceUpdate();
       offPresenceState();
+      offGlobalMessage();
       disconnectSocket();
     };
   }, [token, user?.id, setUserStatus, userStatus]);
