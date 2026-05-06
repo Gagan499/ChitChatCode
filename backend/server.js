@@ -32,7 +32,7 @@ sequelize.authenticate()
         console.log("✅ Connected to MySQL successfully");
 
         // 🔹 Sync Models
-        return sequelize.sync();
+        return sequelize.sync({ alter: true });
     })
     .then(() => {
         console.log("✅ Database synced successfully");
