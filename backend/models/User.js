@@ -20,7 +20,22 @@ const User = sequelize.define("User", {
   password_hash: {
     type: DataTypes.TEXT,
     allowNull: false,
-  }
+  },
+  about: {
+    type: DataTypes.STRING(140),
+    allowNull: true,
+    defaultValue: "Hey there! I am using ChitChatCode 💬",
+  },
+  language: {
+    type: DataTypes.STRING(10),
+    allowNull: false,
+    defaultValue: "en",
+  },
+  two_factor_enabled: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+  },
 }, {
   tableName: "users",
   timestamps: true,

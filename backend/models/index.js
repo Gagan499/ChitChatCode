@@ -4,6 +4,8 @@ const RoomMember = require("./RoomMember");
 const Message = require("./Message");
 const CodeSnippet = require("./CodeSnippet");
 const ExecutionResult = require("./ExecutionResult");
+const NotificationSettings = require("./NotificationSettings");
+const UserSession = require("./UserSession");
 
 /* One-to-Many */
 User.hasMany(Message, { foreignKey: "sender_id" });
@@ -24,6 +26,13 @@ ExecutionResult.belongsTo(CodeSnippet, { foreignKey: "snippet_id" });
 User.hasMany(ChatRoom, { foreignKey: "created_by" });
 ChatRoom.belongsTo(User, { foreignKey: "created_by" });
 
+/* Settings & Sessions */
+User.hasOne(NotificationSettings, { foreignKey: "user_id", onDelete: "CASCADE" });
+NotificationSettings.belongsTo(User, { foreignKey: "user_id" });
+
+User.hasMany(UserSession, { foreignKey: "user_id", onDelete: "CASCADE" });
+UserSession.belongsTo(User, { foreignKey: "user_id" });
+
 /* Many-to-Many */
 User.belongsToMany(ChatRoom, {
     through: RoomMember,
@@ -41,5 +50,7 @@ module.exports = {
     RoomMember,
     Message,
     CodeSnippet,
-    ExecutionResult
+    ExecutionResult,
+    NotificationSettings,
+    UserSession,
 };
