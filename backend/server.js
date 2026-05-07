@@ -14,27 +14,9 @@ const keepliveRouter = require("./routes/AliveServer");
 const app = express();
 const server = http.createServer(app);
 
-// 🔹 CORS Configuration
-const allowedOrigins = [
-  "http://localhost:5174",
-  "http://localhost:3000",
-  "http://localhost:5000",
-  "https://chit-chat-code-29t8.vercel.app/",
-  process.env.FRONTEND_URL, 
-].filter(Boolean);
-
 const corsOptions = {
-  origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, curl requests)
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  credentials: true,  // Allow cookies and credentials
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+origin: true,
+  credentials: true,
   maxAge: 86400,  // 24 hours
 };
 
