@@ -41,14 +41,8 @@ export const updateNotifSettings = (data) => API.put("/users/notifications", dat
 // ── Linked devices ────────────────────────────────────────────────────────
 export const getDevices      = ()     => API.get("/users/devices");
 export const deleteDevice    = (id)   => API.delete(`/users/devices/${id}`);
-export const loginUser = (data) => API.post("/auth/login", data);
-export const registerUser = (data) => API.post("/auth/register", data);
-export const LogoutUser = () => API.delete("/auth/logout");
-export const getProfile = () => API.get("/auth/me");
-export const updateProfile = (data) => API.put("/auth/me", data);
-export const getUsers = () => API.get("/users");
+
+// ── Google Auth ───────────────────────────────────────────────────────────
 export const googleLogin = (data) => API.post("/auth/google", data);
-export const getDirectRoom = (otherUserId) =>
-  API.get(`/rooms/direct/${otherUserId}`);
 
 export default API;
