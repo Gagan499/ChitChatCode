@@ -110,7 +110,13 @@ const ChatInput = ({ onSend, onTypingStart, onTypingStop }) => {
 
       {/* Code Editor */}
       {showCodeEditor && (
-        <Suspense fallback={<Box sx={{ p: 2, textAlign: "center", color: "#9ca3af" }}>Loading editor...</Box>}>
+        <Suspense
+          fallback={
+            <Box sx={{ p: 2, textAlign: "center", color: "#9ca3af" }}>
+              Loading editor...
+            </Box>
+          }
+        >
           <CodeEditor
             onClose={() => setShowCodeEditor(false)}
             onSendCode={handleSendCode}

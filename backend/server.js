@@ -14,9 +14,33 @@ const keepliveRouter = require("./routes/AliveServer");
 const app = express();
 const server = http.createServer(app);
 
+// 🔹 CORS Configuration
+const allowedOrigins = [
+  "http://localhost:5174",        // Local dev - frontend
+  "http://localhost:3000",        // Alternative local dev
+  "http://localhost:5000",        // Local dev - same origin
+  "https://chitchatcode-1.onrender.com",  // Production frontend on Render
+  process.env.FRONTEND_URL,       // Dynamic frontend URL from env
+].filter(Boolean);  // Remove undefined values
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, curl requests)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,  // Allow cookies and credentials
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  maxAge: 86400,  // 24 hours
+};
+
 // 🔹 Setup WebSockets
 setupSockets(server);
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Routes

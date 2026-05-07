@@ -16,7 +16,6 @@ const PageLoader = () => (
 );
 
 function App() {
-
   const { isAuthenticated, loading } = useContext(AuthContext);
 
   if (loading) {
@@ -32,14 +31,15 @@ function App() {
     <BrowserRouter>
       <Suspense fallback={<PageLoader />}>
         <Routes>
-
           {/* Login Route */}
           <Route
             path="/"
             element={
-              isAuthenticated
-                ? <Navigate to="/dashboard" replace />
-                : <Loginform />
+              isAuthenticated ? (
+                <Navigate to="/dashboard" replace />
+              ) : (
+                <Loginform />
+              )
             }
           />
 
@@ -47,9 +47,11 @@ function App() {
           <Route
             path="/register"
             element={
-              isAuthenticated
-                ? <Navigate to="/dashboard" replace />
-                : <Registerform />
+              isAuthenticated ? (
+                <Navigate to="/dashboard" replace />
+              ) : (
+                <Registerform />
+              )
             }
           />
 
@@ -57,15 +59,17 @@ function App() {
           <Route
             path="/dashboard"
             element={
-              isAuthenticated
-                ? <DashBoard />
-                : <Navigate to="/" replace />
+              isAuthenticated ? <DashBoard /> : <Navigate to="/" replace />
             }
           />
 
           {/* Fallback Route */}
-          <Route path="*" element={<Navigate to={isAuthenticated ? "/dashboard" : "/"} replace />} />
-
+          <Route
+            path="*"
+            element={
+              <Navigate to={isAuthenticated ? "/dashboard" : "/"} replace />
+            }
+          />
         </Routes>
       </Suspense>
     </BrowserRouter>

@@ -13,7 +13,15 @@ const SettingsPage = React.lazy(() => import("./SettingsPage"));
 
 // Loading fallback for settings
 const SettingsLoader = () => (
-  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "#9ca3af" }}>
+  <Box
+    sx={{
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      height: "100%",
+      color: "#9ca3af",
+    }}
+  >
     <div className="auth-spinner" style={{ margin: "auto" }} />
   </Box>
 );
@@ -58,7 +66,10 @@ const WelcomeBanner = ({ username }) => (
     >
       Hey, {username}!
     </Typography>
-    <Typography variant="body1" sx={{ color: "#64748b", maxWidth: 300, textAlign: "center" }}>
+    <Typography
+      variant="body1"
+      sx={{ color: "#64748b", maxWidth: 300, textAlign: "center" }}
+    >
       Select a conversation to start chatting or create a new one.
     </Typography>
     <style>{`
