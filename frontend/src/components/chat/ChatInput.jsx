@@ -1,8 +1,10 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, Suspense } from "react";
 import { Box, Stack, IconButton, InputBase, Chip } from "@mui/material";
 import { Paperclip, PaperPlane, Smiley, X, Code } from "@phosphor-icons/react";
 import EmojiPicker from "emoji-picker-react";
-import CodeEditor from "./CodeEditor";
+
+// Lazy load CodeEditor to reduce initial bundle size
+const CodeEditor = React.lazy(() => import("./CodeEditor"));
 
 const ChatInput = ({ onSend, onTypingStart, onTypingStop }) => {
   const [message, setMessage] = useState("");
@@ -108,10 +110,12 @@ const ChatInput = ({ onSend, onTypingStart, onTypingStop }) => {
 
       {/* Code Editor */}
       {showCodeEditor && (
-        <CodeEditor
-          onClose={() => setShowCodeEditor(false)}
-          onSendCode={handleSendCode}
-        />
+        <Suspense fallback={<Box sx={{ p: 2, textAlign: "center", color: "#9ca3af" }}>Loading editor...</Box>}>
+          <CodeEditor
+            onClose={() => setShowCodeEditor(false)}
+            onSendCode={handleSendCode}
+          />
+        </Suspense>
       )}
 
       {/* Hidden file input — always in DOM, opened instantly via <label> */}

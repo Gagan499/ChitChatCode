@@ -1,13 +1,22 @@
-import React, { useContext } from "react";
+import React, { useContext, Suspense } from "react";
 import { Box, Stack, Typography } from "@mui/material";
 import Sidebar from "../components/layout/Sidebar";
 import ChatList from "../components/sidebar/ChatList";
 import ChatWindow from "../components/chat/chatWindow";
 import GroupsPanel from "../components/groups/GroupsPanel";
-import SettingsPage from "./SettingsPage";
 import LocalPhoneOutlinedIcon from "@mui/icons-material/LocalPhoneOutlined";
 import { useChat } from "../hooks/useChat";
 import { AuthContext } from "../context/AuthContext";
+
+// Lazy load settings page to reduce initial bundle
+const SettingsPage = React.lazy(() => import("./SettingsPage"));
+
+// Loading fallback for settings
+const SettingsLoader = () => (
+  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "#9ca3af" }}>
+    <div className="auth-spinner" style={{ margin: "auto" }} />
+  </Box>
+);
 // ─── Placeholder panel ────────────────────────────────────────────────────────
 const PlaceholderPanel = ({ icon, label }) => (
   <Stack
@@ -129,7 +138,9 @@ function DashBoard() {
       {/* Tab 3 — Settings */}
       {activeTab === 3 && (
         <Box sx={{ flex: 1, overflow: "hidden" }}>
-          <SettingsPage />
+          <Suspense fallback={<SettingsLoader />}>
+            <SettingsPage />
+          </Suspense>
         </Box>
       )}
     </div>
