@@ -16,12 +16,12 @@ const server = http.createServer(app);
 
 // 🔹 CORS Configuration
 const allowedOrigins = [
-  "http://localhost:5174",        // Local dev - frontend
-  "http://localhost:3000",        // Alternative local dev
-  "http://localhost:5000",        // Local dev - same origin
-  "https://chitchatcode-1.onrender.com",  // Production frontend on Render
-  process.env.FRONTEND_URL,       // Dynamic frontend URL from env
-].filter(Boolean);  // Remove undefined values
+  "http://localhost:5174",
+  "http://localhost:3000",
+  "http://localhost:5000",
+  "https://chit-chat-code-29t8.vercel.app/",
+  process.env.FRONTEND_URL, 
+].filter(Boolean);
 
 const corsOptions = {
   origin: (origin, callback) => {
