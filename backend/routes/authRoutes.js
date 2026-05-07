@@ -4,6 +4,7 @@ const {
   registerUser,
   loginUser,
   getMe,
+  googleAuth,
   logout,
   updateMe,
 } = require("../controllers/authController");
@@ -15,5 +16,6 @@ router.post("/login", loginUser);
 router.get("/me", protect, getMe);
 router.put("/me", protect, updateMe);
 router.post("/logout", logout);
+router.post("/google", googleAuth);
 
 module.exports = router;
