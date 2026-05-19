@@ -36,11 +36,23 @@ const User = sequelize.define("User", {
     allowNull: false,
     defaultValue: false,
   },
+
+  // ── Password reset fields ──────────────────────────────────────────────
+  reset_password_token: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+    defaultValue: null,
+  },
+  reset_password_expire: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    defaultValue: null,
+  },
 }, {
   tableName: "users",
   timestamps: true,
   createdAt: "created_at",
-  updatedAt: "updated_at"
+  updatedAt: "updated_at",
 });
 
 module.exports = User;
