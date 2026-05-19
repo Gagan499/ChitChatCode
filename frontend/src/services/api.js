@@ -45,4 +45,8 @@ export const deleteDevice    = (id)   => API.delete(`/users/devices/${id}`);
 // ── Google Auth ───────────────────────────────────────────────────────────
 export const googleLogin = (data) => API.post("/auth/google", data);
 
+// ── Password reset ─────────────────────────────────────────────────────────
+export const forgotPassword = (data)        => API.post("/auth/forgot-password", data);
+export const resetPassword  = (token, data) => API.post(`/auth/reset-password/${token}`, data);
+
 export default API;
