@@ -6,6 +6,8 @@ import { AuthContext } from "./context/AuthContext";
 const DashBoard = React.lazy(() => import("./pages/DashBoard"));
 const Loginform = React.lazy(() => import("./pages/Loginform"));
 const Registerform = React.lazy(() => import("./pages/Registerform"));
+const ForgotPassword = React.lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword  = React.lazy(() => import("./pages/ResetPassword"));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -54,6 +56,15 @@ function App() {
               )
             }
           />
+
+          {/* Forgot Password — public, redirect if logged in */}
+          <Route
+            path="/forgot-password"
+            element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <ForgotPassword />}
+          />
+
+          {/* Reset Password — public, always accessible so the link in the email works */}
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
 
           {/* Dashboard Route (Protected) */}
           <Route
