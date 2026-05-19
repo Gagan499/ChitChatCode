@@ -7,19 +7,29 @@ const loginAlertTemplate      = require("../templates/loginAlertTemplate");
 const passwordChangedTemplate = require("../templates/passwordChangedTemplate");
 
 // ─── Transporter (singleton — reused across all requests) ────────────────────
-const transporter = nodemailer.createTransport({
-  host:   process.env.MAIL_HOST,
-  port:   Number(process.env.MAIL_PORT) || 587,
-  secure: false,   // STARTTLS on port 587
-  auth: {
-    user: process.env.MAIL_USER,
-    pass: process.env.MAIL_PASS,
-  },
-  tls: { rejectUnauthorized: false },
-});
+let transporter = null;
+
+if (process.env.MAIL_HOST && process.env.MAIL_USER && process.env.MAIL_PASS) {
+  transporter = nodemailer.createTransport({
+    host:   process.env.MAIL_HOST,
+    port:   Number(process.env.MAIL_PORT) || 587,
+    secure: false,   // STARTTLS on port 587
+    auth: {
+      user: process.env.MAIL_USER,
+      pass: process.env.MAIL_PASS,
+    },
+    tls: { rejectUnauthorized: false },
+  });
+} else {
+  console.warn("[MailService] Mail not configured — emails will be skipped");
+}
 
 // ─── Core send helper ─────────────────────────────────────────────────────────
 const sendEmail = async ({ to, subject, html }) => {
+  if (!transporter) {
+    console.warn(`[MailService] Skipped "${subject}" to ${to} — mail not configured`);
+    return null;
+  }
   try {
     const info = await transporter.sendMail({
       from: process.env.MAIL_FROM || "ChitChatCode <noreply@chitchatcode.app>",

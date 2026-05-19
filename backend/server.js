@@ -32,22 +32,20 @@ app.use("/api/rooms", roomRoutes);
 app.use("/api/code", codeRoutes);
 app.use("/api/keepalive", keepliveRouter);
 
-// 🔹 Test DB Connection First
+// 🔹 Test DB Connection First (no sync — tables already exist on Aiven)
+const PORT = process.env.PORT || 5000;
+
 sequelize.authenticate()
     .then(() => {
         console.log("✅ Connected to MySQL successfully");
-
-        // 🔹 Sync Models
-        return sequelize.sync();
-    })
-    .then(() => {
-        console.log("✅ Database synced successfully");
-
-        // 🔹 Start Server ONLY after DB is ready
-        server.listen(process.env.PORT, () => {
-            console.log(`🚀 Server running on port ${process.env.PORT}`);
+        server.listen(PORT, () => {
+            console.log(`🚀 Server running on port ${PORT}`);
         });
     })
     .catch((err) => {
-        console.error("❌ Error connecting to database:", err);
+        console.error("❌ Error connecting to database:", err.message);
+        // Still start the server so Render doesn't mark it as crashed
+        server.listen(PORT, () => {
+            console.log(`⚠️ Server running on port ${PORT} (DB connection failed)`);
+        });
     });
