@@ -1,4 +1,5 @@
 import { useState, useContext } from 'react';
+import { Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import Registerform from './Registerform';
 import { loginUser, googleLogin } from "../services/api";
@@ -231,6 +232,16 @@ function Loginform() {
                   {showPassword ? "Hide" : "Show"}
                 </button>
               </div>
+            </div>
+
+            {/* Forgot Password */}
+            <div className="text-right -mt-2">
+              <Link
+                to="/forgot-password"
+                className="text-sm text-[#371285] font-semibold hover:text-[#8a1c7c] transition-colors hover:underline underline-offset-4"
+              >
+                Forgot Password?
+              </Link>
             </div>
 
             {/* Button */}
